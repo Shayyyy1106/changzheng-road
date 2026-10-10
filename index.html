@@ -397,10 +397,12 @@ function unlockAudio(){
  initAudio();
  Object.entries(snd).forEach(([k,a])=>{
   if(k==='intro')return;
-  const v=a.volume;a.volume=0;
+  a.muted=true;
   const p=a.play();
-  if(p&&p.then)p.then(()=>{a.pause();a.currentTime=0;a.volume=v;}).catch(()=>{a.volume=v;});
-  else{a.pause();a.volume=v;}
+  const restore=()=>{try{a.pause();a.currentTime=0;}catch(e){}a.muted=false;};
+  if(p&&p.then)p.then(restore).catch(()=>{a.muted=false;});
+  else{restore();}
+  setTimeout(()=>{a.muted=false;},1500);
  });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
