@@ -353,9 +353,8 @@ function playBGM(k){
  const a=snd[k];
  if(!a.paused)return; // 同一首已在播放则不打断
  a.currentTime=0;
- /* 开场音乐立即播放；其余BGM延迟0.5秒再开始 */
- if(k==='intro'){const p=a.play();if(p)p.catch(()=>{});return;}
- bgmTimer=setTimeout(()=>{bgmTimer=null;if(muted)return;const p=a.play();if(p)p.catch(()=>{});},500);
+ /* 所有BGM立即播放：切换BGM均由用户手势触发（开始游戏/继续/返回菜单），手势上下文内play()不会被自动播放策略拦截，无需延迟 */
+ const p=a.play();if(p)p.catch(()=>{});
 }
 function playOne(k){if(muted)return;const a=snd[k];a.currentTime=0;const p=a.play();if(p)p.catch(()=>{});}
 let gunTimer=null,heartPlaying=false;
@@ -395,15 +394,6 @@ let _audioUnlocked=false;
 function unlockAudio(){
  if(_audioUnlocked)return;_audioUnlocked=true;
  initAudio();
- Object.entries(snd).forEach(([k,a])=>{
-  if(k==='intro')return;
-  a.muted=true;
-  const p=a.play();
-  const restore=()=>{try{a.pause();a.currentTime=0;}catch(e){}a.muted=false;};
-  if(p&&p.then)p.then(restore).catch(()=>{a.muted=false;});
-  else{restore();}
-  setTimeout(()=>{a.muted=false;},1500);
- });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
   const p=snd.intro.play();if(p)p.catch(()=>{});
