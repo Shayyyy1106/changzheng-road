@@ -390,15 +390,27 @@ function toggleMute(){
   else{playBGM('intro');}
  }
 }
-/* 首次点击/按键后解锁并播放开头音乐（强制重新播放，绕过 paused 状态判断，确保浏览器自动播放策略拦截后仍可解锁出声） */
-document.addEventListener('pointerdown',function firstGesture(){
+/* 首次点击后解锁全部音频并播放开场音乐：在手势上下文内对所有 BGM 执行一次 unmuted play（音量置0避免出声）再暂停，解锁各 audio 元素，使后续 setTimeout 中的延迟播放不再被浏览器自动播放策略拦截；同时绑 click 兼容 iOS（pointerdown 在部分移动端不可靠） */
+let _audioUnlocked=false;
+function unlockAudio(){
+ if(_audioUnlocked)return;_audioUnlocked=true;
  initAudio();
+ Object.entries(snd).forEach(([k,a])=>{
+  if(k==='intro')return;
+  const v=a.volume;a.volume=0;
+  const p=a.play();
+  if(p&&p.then)p.then(()=>{a.pause();a.currentTime=0;a.volume=v;}).catch(()=>{a.volume=v;});
+  else{a.pause();a.volume=v;}
+ });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
   const p=snd.intro.play();if(p)p.catch(()=>{});
  }
- document.removeEventListener('pointerdown',firstGesture);
-});
+ document.removeEventListener('pointerdown',unlockAudio);
+ document.removeEventListener('click',unlockAudio);
+}
+document.addEventListener('pointerdown',unlockAudio);
+document.addEventListener('click',unlockAudio);
 
 /* ============ 用户数据 ============ */
 let currentUser=null;
