@@ -351,9 +351,9 @@ function playBGM(k){
  if(bgmTimer){clearTimeout(bgmTimer);bgmTimer=null;}
  if(muted)return;
  const a=snd[k];
- if(!a.paused)return; // 同一首已在播放则不打断
+ /* 不依赖 paused 状态判断：某些浏览器在 play() 被自动播放策略拦截后会留下 paused=false 的伪状态，
+    导致 if(!a.paused)return 跳过播放。直接 currentTime=0+play() 确保每次都能播放 */
  a.currentTime=0;
- /* 所有BGM立即播放：切换BGM均由用户手势触发（开始游戏/继续/返回菜单），手势上下文内play()不会被自动播放策略拦截，无需延迟 */
  const p=a.play();if(p)p.catch(()=>{});
 }
 function playOne(k){if(muted)return;const a=snd[k];a.currentTime=0;const p=a.play();if(p)p.catch(()=>{});}
@@ -389,11 +389,20 @@ function toggleMute(){
   else{playBGM('intro');}
  }
 }
-/* 首次点击后解锁全部音频并播放开场音乐：在手势上下文内对所有 BGM 执行一次 unmuted play（音量置0避免出声）再暂停，解锁各 audio 元素，使后续 setTimeout 中的延迟播放不再被浏览器自动播放策略拦截；同时绑 click 兼容 iOS（pointerdown 在部分移动端不可靠） */
+/* 首次点击后解锁全部音频并播放开场音乐：在手势上下文内对每个音频元素执行一次 volume=0→play→pause，
+   确保各 audio 元素被浏览器标记为"用户激活"，后续播放（含 setTimeout 中的延迟播放）不再被自动播放策略拦截。
+   play 后立即 pause 恢复 paused=true，不影响 playBGM 的逻辑。同时绑 click 兼容 iOS（pointerdown 在部分移动端不可靠） */
 let _audioUnlocked=false;
 function unlockAudio(){
  if(_audioUnlocked)return;_audioUnlocked=true;
  initAudio();
+ /* 解锁所有音频元素（intro 单独处理，下面正常播放） */
+ ['easy','hard','hell','victory','wrong','heart','guns'].forEach(x=>{
+  const a=snd[x]; const v=a.volume;
+  a.volume=0;
+  try{ const p=a.play(); if(p) p.then(()=>{a.pause();a.volume=v;}).catch(()=>{a.pause();a.volume=v;}); }
+  catch(e){ a.pause(); a.volume=v; }
+ });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
   const p=snd.intro.play();if(p)p.catch(()=>{});
