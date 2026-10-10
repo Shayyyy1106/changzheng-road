@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长征之路 · 班级排行榜</title>
+<link rel="icon" type="image/png" href="images/icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    color:#f5e6c8;
+    background:#2b0a08 url("images/real/route.jpg") center/cover no-repeat fixed;
+    min-height:100vh;
+    position:relative;
+}
+body::before{
+    content:"";position:fixed;inset:0;
+    background:linear-gradient(160deg,rgba(60,8,6,.92),rgba(20,4,3,.95));
+    z-index:0;
+}
+.container{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:40px 20px 60px}
+.star{text-align:center;font-size:42px;margin-bottom:8px}
+h1{
+    text-align:center;font-size:30px;color:#ffd700;
+    text-shadow:0 2px 12px rgba(0,0,0,.8);letter-spacing:4px;margin-bottom:8px;
+}
+.subtitle{text-align:center;color:#c9b896;font-size:14px;margin-bottom:36px;letter-spacing:2px}
+
+.big-card{
+    display:block;text-decoration:none;color:#f5e6c8;
+    border-radius:18px;padding:28px 24px;margin-bottom:20px;
+    position:relative;overflow:hidden;
+    transition:transform .25s,box-shadow .25s;
+    border:1px solid rgba(255,215,0,.35);
+}
+.big-card:active{transform:scale(.97)}
+.big-card.submit{background:linear-gradient(135deg,rgba(192,57,43,.92),rgba(120,20,12,.92));box-shadow:0 8px 30px rgba(192,57,43,.35)}
+.big-card.view{background:linear-gradient(135deg,rgba(140,105,20,.92),rgba(90,60,10,.92));box-shadow:0 8px 30px rgba(200,160,60,.25)}
+.big-card:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(255,215,0,.35)}
+.big-card .icon{font-size:40px;margin-bottom:10px}
+.big-card .t{font-size:22px;font-weight:bold;color:#fff;margin-bottom:6px}
+.big-card .d{font-size:13px;color:rgba(255,255,255,.82);line-height:1.6}
+.big-card .go{position:absolute;right:22px;top:50%;transform:translateY(-50%);font-size:30px;color:rgba(255,255,255,.55)}
+
+.section-title{text-align:center;color:#ffd700;font-size:15px;letter-spacing:3px;margin:32px 0 14px}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tab{
+    flex:1;min-width:130px;
+    padding:14px 10px;text-align:center;text-decoration:none;
+    border-radius:12px;font-size:15px;font-weight:bold;
+    border:1px solid rgba(255,215,0,.4);color:#ffd700;
+    background:rgba(80,15,10,.6);transition:all .2s;
+}
+.tab:hover{background:rgba(192,57,43,.85);color:#fff}
+.tab .weight{display:block;font-size:11px;font-weight:normal;color:#c9b896;margin-top:3px}
+.tab:hover .weight{color:rgba(255,255,255,.8)}
+
+.rules{
+    margin-top:36px;background:rgba(0,0,0,.35);
+    border:1px solid rgba(255,215,0,.2);border-radius:14px;padding:20px 22px;
+    font-size:13.5px;line-height:1.9;color:#d8c9a8;
+}
+.rules h3{color:#ffd700;font-size:15px;margin-bottom:8px;letter-spacing:1px}
+.rules b{color:#ffd700}
+.watermark{text-align:center;margin-top:28px;font-size:12px;color:rgba(245,230,200,.45)}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="star">⭐</div>
+    <h1>长征之路 · 班级排行榜</h1>
+    <div class="subtitle">生死二十五抉择 · 看谁能带领队伍走向胜利</div>
+
+    <a class="big-card submit" href="https://my.feishu.cn/share/base/shrc6Y3K7lWZyb7UBbOgyXlH5Ug" target="_blank" rel="noopener">
+        <div class="icon">📝</div>
+        <div class="t">提交我的成绩</div>
+        <div class="d">玩完一局后点这里，填写姓名、学校、班级、模式和结局页上的分数。无需登录，同名同班自动合并，每个模式取最高分。</div>
+        <div class="go">›</div>
+    </a>
+
+    <a class="big-card view" href="https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vew2JcitHS" target="_blank" rel="noopener">
+        <div class="icon">🏆</div>
+        <div class="t">查看战绩排名</div>
+        <div class="d">所有同学的成绩自动合并汇总，按加权总分从高到低排名。</div>
+        <div class="go">›</div>
+    </a>
+
+    <div class="section-title">— 学校 · 班级排行 —</div>
+    <div class="tabs">
+        <a class="tab" href="https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vewqdh34q9" target="_blank" rel="noopener">🏫 学校榜<span class="weight">同校排名</span></a>
+        <a class="tab" href="https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vew7JIa51H" target="_blank" rel="noopener">👨‍🎓 班级榜<span class="weight">同班排名</span></a>
+    </div>
+
+    <div class="section-title">— 分模式榜单 —</div>
+    <div class="tabs">
+        <a class="tab" href="https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vew7QFGJIT" target="_blank" rel="noopener">简单榜<span class="weight">权重 ×1.0</span></a>
+        <a class="tab" href="https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vewcgMQ3Md" target="_blank" rel="noopener">困难榜<span class="weight">权重 ×1.5</span></a>
+        <a class="tab" href="https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vewNGmEi6S" target="_blank" rel="noopener">地狱榜<span class="weight">权重 ×2.0</span></a>
+    </div>
+
+    <div class="rules">
+        <h3>📜 计分规则</h3>
+        每局共 <b>25 题</b>，答错超过 8 题则征程失败，失败成绩不要提交。<br>
+        答对一题得分，各模式权重不同：<br>
+        · 简单模式：每题 10 分，满分 <b>250</b>，加权 ×1.0<br>
+        · 困难模式：每题 15 分，满分 <b>375</b>，加权 ×1.5<br>
+        · 地狱模式：每题 20 分，满分 <b>500</b>，加权 ×2.0<br>
+        每个模式可以玩多次，榜单以 <b>最高分为准</b>。
+    </div>
+
+    <div class="watermark">开发者 · 西安交通大学 越杰2601班 谢乙玄</div>
+</div>
+</body>
+</html>

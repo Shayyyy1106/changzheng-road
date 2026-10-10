@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长征之路 - 生死抉择</title>
+<link rel="icon" type="image/png" href="images/icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','SimHei',sans-serif;background:#0a0a0a;color:#fff;overflow:hidden;height:100vh}
+.game-container{width:100%;height:100vh;position:relative;display:flex;flex-direction:column}
+
+/* 顶部标题栏 */
+.header{background:linear-gradient(180deg,rgba(139,0,0,0.9) 0%,rgba(0,0,0,0.8) 100%);padding:12px 20px;text-align:center;border-bottom:3px solid #8b0000;position:relative;z-index:100}
+.header h1{font-size:26px;color:#ffd700;text-shadow:2px 2px 4px rgba(0,0,0,0.8);letter-spacing:8px}
+.header .subtitle{font-size:13px;color:#ccc;margin-top:4px;letter-spacing:3px}
+
+/* ===== 开场欢迎弹窗 ===== */
+.welcome-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:400;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;overflow-y:auto;transition:opacity .6s}
+.welcome-overlay.hidden{opacity:0;pointer-events:none}
+.welcome-bg{position:absolute;top:0;left:0;width:100%;height:100%;background:url('images/real/luding.jpg') center/cover no-repeat;filter:brightness(.4)}
+.welcome-overlay::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(80,0,0,.5) 100%)}
+.welcome-card{position:relative;z-index:1;max-width:800px;width:100%;background:rgba(10,10,10,.88);border:1px solid rgba(255,215,0,.35);border-radius:16px;padding:28px 32px;max-height:90vh;overflow-y:auto}
+.welcome-card h2{font-size:32px;color:#ffd700;text-align:center;margin-bottom:10px;text-shadow:0 0 20px rgba(255,215,0,.4)}
+.welcome-card .tagline{font-size:15px;color:#ffaaaa;text-align:center;margin-bottom:20px;letter-spacing:2px}
+
+/* 游戏规则 */
+.rules-section{background:rgba(139,0,0,.18);border:1px solid rgba(220,20,60,.35);border-radius:12px;padding:16px 20px;margin-bottom:18px}
+.rules-section h3{color:#ffd700;font-size:17px;margin-bottom:10px;text-align:center;letter-spacing:3px}
+.rules-section p,.rules-section li{font-size:13.5px;line-height:2;color:#ddd}
+.rules-section ul{padding-left:18px}
+.rules-section .highlight{color:#ffd700;font-weight:bold}
+.rules-section .mode-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.mode-tag{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 12px;text-align:center;min-width:140px}
+.mode-tag .mt-name{font-size:14px;font-weight:bold;margin-bottom:4px}
+.mode-tag .mt-info{font-size:11px;color:#aaa;line-height:1.6}
+.mode-tag.easy .mt-name{color:#4ade80}
+.mode-tag.hard .mt-name{color:#ff8c00}
+.mode-tag.hell .mt-name{color:#ff4444}
+
+/* 登录表单 */
+.login-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.login-form .field{display:flex;flex-direction:column;gap:4px}
+.login-form label{font-size:13px;color:#bbb}
+.login-form input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;outline:none}
+.login-form input:focus{border-color:#ffd700}
+.login-form .field.full{grid-column:1/-1}
+.start-btn{width:100%;padding:14px;font-size:18px;background:linear-gradient(90deg,#8b0000,#dc143c);color:#fff;border:none;border-radius:30px;cursor:pointer;transition:all .3s;font-weight:bold;letter-spacing:4px}
+.start-btn:hover{transform:scale(1.03);box-shadow:0 0 30px rgba(220,20,60,.5)}
+
+/* ===== 难度选择界面 ===== */
+.difficulty-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:200;transition:opacity .5s,transform .5s;background:url('images/real/route.jpg') center/cover no-repeat}
+.difficulty-screen::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75)}
+.difficulty-screen>*{position:relative;z-index:1}
+.difficulty-screen.hidden{opacity:0;transform:scale(1.1);pointer-events:none}
+.difficulty-screen h2{font-size:36px;color:#ffd700;margin-bottom:8px;text-shadow:0 0 20px rgba(255,215,0,.5)}
+.difficulty-screen .desc{font-size:15px;color:#bbb;margin-bottom:30px;text-align:center;max-width:600px;line-height:1.8}
+.difficulty-buttons{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.difficulty-btn{width:200px;height:270px;border:3px solid;border-radius:15px;background:rgba(0,0,0,.65);cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;transition:all .3s;position:relative;overflow:hidden}
+.difficulty-btn:hover{transform:translateY(-10px);box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.difficulty-btn.easy{border-color:#228b22;box-shadow:0 0 30px rgba(34,139,34,.3)}
+.difficulty-btn.easy:hover{box-shadow:0 0 50px rgba(34,139,34,.6)}
+.difficulty-btn.hard{border-color:#ff8c00;box-shadow:0 0 30px rgba(255,140,0,.3)}
+.difficulty-btn.hard:hover{box-shadow:0 0 50px rgba(255,140,0,.6)}
+.difficulty-btn.hell{border-color:#dc143c;box-shadow:0 0 30px rgba(220,20,60,.3);animation:hellPulse 2s infinite}
+@keyframes hellPulse{0%,100%{box-shadow:0 0 30px rgba(220,20,60,.3)}50%{box-shadow:0 0 60px rgba(220,20,60,.8)}}
+.difficulty-btn .icon{font-size:44px}
+.difficulty-btn .name{font-size:22px;font-weight:bold}
+.difficulty-btn .info{font-size:11.5px;color:#999;text-align:center;line-height:1.7;padding:0 10px}
+.difficulty-btn.easy .name{color:#4ade80}
+.difficulty-btn.hard .name{color:#ff8c00}
+.difficulty-btn.hell .name{color:#dc143c}
+.difficulty-btn .best-score{position:absolute;top:8px;right:10px;font-size:11px;color:#ffd700;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:10px}
+.back-to-welcome{position:absolute;top:16px;left:16px;z-index:2;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:20px;cursor:pointer;font-size:13px;transition:all .3s}
+.back-to-welcome:hover{background:rgba(255,215,0,.2);border-color:#ffd700}
+.leaderboard-btn{position:absolute;top:16px;right:16px;z-index:2;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);color:#ffd700;padding:8px 16px;border-radius:20px;cursor:pointer;font-size:13px;transition:all .3s}
+.leaderboard-btn:hover{background:rgba(255,215,0,.3)}
+
+/* ===== 排行榜弹窗 ===== */
+.leaderboard-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:500;opacity:0;pointer-events:none;transition:opacity .4s;padding:20px}
+.leaderboard-overlay.show{opacity:1;pointer-events:auto}
+.leaderboard-card{max-width:700px;width:100%;background:rgba(20,20,20,.95);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:24px 28px;max-height:85vh;overflow-y:auto}
+.leaderboard-card h3{color:#ffd700;font-size:22px;text-align:center;margin-bottom:16px;letter-spacing:3px}
+.leaderboard-table{width:100%;border-collapse:collapse;font-size:13px}
+.leaderboard-table th{background:rgba(139,0,0,.4);color:#ffd700;padding:10px 8px;text-align:center;border-bottom:2px solid rgba(255,215,0,.3)}
+.leaderboard-table td{padding:10px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);color:#ddd}
+.leaderboard-table tr:nth-child(1) td{color:#ffd700;font-weight:bold;background:rgba(255,215,0,.08)}
+.leaderboard-table tr:nth-child(2) td{color:#ccc;font-weight:bold;background:rgba(255,255,255,.04)}
+.leaderboard-table tr:nth-child(3) td{color:#cd7f32;font-weight:bold;background:rgba(205,127,50,.06)}
+.lb-close{margin-top:16px;text-align:center}
+.lb-close button{padding:10px 36px;font-size:15px;background:#dc143c;color:#fff;border:none;border-radius:24px;cursor:pointer}
+
+/* ===== 游戏主界面 ===== */
+.game-screen{flex:1;display:flex;flex-direction:column;position:relative;background:#000}
+.scene-background{position:absolute;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;transition:opacity 1s}
+.scene-bg-icon{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);font-size:min(45vw,380px);opacity:.08;pointer-events:none;z-index:1;filter:grayscale(30%);transition:opacity .8s}
+.scene-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.35) 45%,rgba(0,0,0,.88) 100%)}
+.game-content{position:relative;z-index:10;flex:1;display:flex;flex-direction:column;padding:16px 20px;max-width:960px;margin:0 auto;width:100%;overflow-y:auto}
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:rgba(0,0,0,.7);border-radius:10px;margin-bottom:14px;border:1px solid rgba(255,215,0,.3);flex-shrink:0}
+.exit-btn{background:rgba(220,20,60,.15);border:1px solid rgba(220,20,60,.5);color:#ff9090;font-size:13px;padding:5px 12px;border-radius:8px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.exit-btn:hover{background:rgba(220,20,60,.55);color:#fff}
+.level-indicator{font-size:17px;color:#ffd700;font-weight:bold}
+.score-indicator{font-size:15px;color:#4ade80;font-weight:bold}
+.timer-container{display:flex;justify-content:center;margin-bottom:14px;flex-shrink:0}
+.timer-circle{width:76px;height:76px;position:relative}
+.timer-circle svg{transform:rotate(-90deg)}
+.timer-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:6}
+.timer-progress{fill:none;stroke:#ffd700;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .1s linear,stroke .3s}
+.timer-circle.warning .timer-progress{stroke:#ff8c00}
+.timer-circle.danger .timer-progress{stroke:#dc143c;animation:pulse .5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.timer-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:bold;color:#fff;text-shadow:0 0 10px rgba(0,0,0,.8)}
+.scene-description{background:rgba(0,0,0,.82);border-left:4px solid #dc143c;padding:16px 20px;margin-bottom:14px;border-radius:0 10px 10px 0;flex-shrink:0}
+.scene-description h3{color:#ff6b6b;font-size:19px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.scene-description p{font-size:15px;line-height:1.8;color:#ddd}
+.options-container{display:flex;flex-direction:column;gap:12px;flex:1;justify-content:center}
+.option-btn{background:rgba(0,0,0,.82);border:2px solid rgba(255,255,255,.2);border-radius:10px;padding:15px 20px;text-align:left;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:15px;position:relative;overflow:hidden}
+.option-btn::before{content:'';position:absolute;left:0;top:0;height:100%;width:4px;background:#ffd700;transform:scaleY(0);transition:transform .25s}
+.option-btn:hover::before{transform:scaleY(1)}
+.option-btn:hover{background:rgba(255,215,0,.12);border-color:#ffd700;transform:translateX(8px)}
+.option-letter{width:38px;height:38px;background:#dc143c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:bold;flex-shrink:0}
+.option-text{font-size:15px;line-height:1.6;color:#eee}
+
+/* ===== 结果弹窗 ===== */
+.result-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.96);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:150;opacity:0;pointer-events:none;transition:opacity .5s;padding:30px 20px;overflow-y:auto}
+.result-overlay.show{opacity:1;pointer-events:auto}
+.result-card{max-width:720px;width:100%;background:rgba(20,20,20,.95);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:30px 36px;text-align:center}
+.result-icon{font-size:56px;margin-bottom:12px;animation:resultBounce .6s}
+@keyframes resultBounce{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.result-title{font-size:30px;font-weight:bold;margin-bottom:14px}
+.result-title.success{color:#4ade80}
+.result-title.fail{color:#ff6b6b}
+.result-text{font-size:15px;color:#ccc;line-height:1.9;text-align:left;background:rgba(255,255,255,.05);border-radius:10px;padding:14px 18px;margin-bottom:16px}
+.history-box{text-align:left;background:linear-gradient(135deg,rgba(139,0,0,.25) 0%,rgba(0,0,0,.4) 100%);border:1px solid rgba(220,20,60,.4);border-radius:10px;padding:16px 20px;margin-bottom:20px}
+.history-box h4{color:#ffd700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;letter-spacing:2px}
+.history-box p{font-size:14px;line-height:2;color:#bbb;text-indent:2em}
+.result-btn{padding:13px 48px;font-size:17px;background:#dc143c;color:#fff;border:none;border-radius:30px;cursor:pointer;transition:all .3s}
+.result-btn:hover{background:#ff2244;transform:scale(1.05)}
+
+/* ===== 结局画面 ===== */
+.end-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:300;opacity:0;pointer-events:none;transition:opacity 1s;overflow-y:auto;padding:30px 16px}
+.end-screen.show{opacity:1;pointer-events:auto}
+.end-screen.victory{background:linear-gradient(135deg,rgba(100,10,10,.97) 0%,rgba(15,5,5,.98) 100%)}
+.end-screen.defeat{background:linear-gradient(135deg,rgba(10,10,15,.98) 0%,rgba(25,15,15,.97) 100%)}
+.end-title{font-size:42px;font-weight:bold;margin-bottom:16px;text-shadow:0 0 30px currentColor;text-align:center}
+.end-screen.victory .end-title{color:#ffd700}
+.end-screen.defeat .end-title{color:#ff6b6b}
+.end-score{font-size:20px;color:#ffd700;margin-bottom:20px}
+.end-meaning{max-width:780px;width:100%;background:rgba(0,0,0,.55);border:1px solid rgba(255,215,0,.35);border-radius:14px;padding:24px 32px;margin-bottom:22px}
+.end-meaning h3{color:#ffd700;font-size:19px;margin-bottom:12px;letter-spacing:3px;text-align:center}
+.end-meaning p{font-size:14px;line-height:2.1;color:#ccc;text-indent:2em;margin-bottom:8px}
+.march-stats{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:780px;margin-bottom:24px}
+.stat-card{background:rgba(139,0,0,.3);border:1px solid rgba(255,215,0,.3);border-radius:10px;padding:12px 18px;text-align:center;min-width:120px}
+.stat-card .num{font-size:22px;font-weight:bold;color:#ffd700}
+.stat-card .label{font-size:12px;color:#aaa;margin-top:4px}
+.restart-btn{padding:14px 56px;font-size:18px;background:transparent;color:#ffd700;border:2px solid #ffd700;border-radius:30px;cursor:pointer;transition:all .3s;margin-bottom:10px}
+.submit-score-btn{background:linear-gradient(135deg,#c0392b,#8e1a10);color:#fff;border-color:#ffd700;box-shadow:0 0 18px rgba(255,215,0,.35);font-weight:bold}
+.submit-score-btn:hover{background:linear-gradient(135deg,#e74c3c,#a02018);transform:translateY(-2px);box-shadow:0 0 26px rgba(255,215,0,.6)}
+.restart-btn:hover{background:#ffd700;color:#000}
+.end-buttons{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+
+/* 开发者水印 */
+.dev-watermark{position:fixed;bottom:8px;right:12px;z-index:999;font-size:11px;color:rgba(255,255,255,.28);letter-spacing:1px;pointer-events:none;font-family:'Microsoft YaHei',sans-serif}
+
+/* 静音按钮 */
+.mute-btn{position:fixed;bottom:8px;left:12px;z-index:999;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center}
+.mute-btn:hover{border-color:#ffd700}
+
+@media(max-width:768px){
+.header h1{font-size:18px}
+.difficulty-btn{width:150px;height:220px}
+.difficulty-btn .icon{font-size:34px}
+.difficulty-btn .name{font-size:18px}
+.result-card{padding:20px}
+.end-title{font-size:28px}
+.option-text{font-size:13px}
+.login-form{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="game-container">
+    <div class="header">
+        <h1>长 征 之 路</h1>
+        <div class="subtitle">生死抉择 · 重走革命路（1934—1936）</div>
+    </div>
+
+    <!-- 开场欢迎弹窗 -->
+    <div class="welcome-overlay" id="welcomeOverlay">
+        <div class="welcome-bg"></div>
+        <div class="welcome-card">
+            <h2>假如你穿越成为长征时期的指战员</h2>
+            <p class="tagline">1934年，你醒来发现自己手握一支驳壳枪，身边是衣衫褴褛但目光坚毅的战友。前路是雪山、草地、大河与追兵——每一次抉择，都关乎生死。</p>
+
+            <div class="rules-section">
+                <h3>📜 游戏规则</h3>
+                <ul>
+                    <li>三种模式：<span class="highlight">简单 / 困难 / 地狱</span>，每局 <span class="highlight">25 道题</span>，按真实历史事件时间线推进。</li>
+                    <li><span class="highlight">不限生命</span>：答错或超时仅本题不得分，可继续答完全部 25 题；但<span class="highlight">答错超过 8 题即判定征程失败</span>。</li>
+                    <li>计分规则：简单每题 <span class="highlight">10分</span>，困难每题 <span class="highlight">15分</span>，地狱每题 <span class="highlight">20分</span>。满分分别为 250 / 375 / 500 分。</li>
+                    <li>难度权重：简单 <span class="highlight">×1.0</span>，困难 <span class="highlight">×1.5</span>，地狱 <span class="highlight">×2.0</span>。</li>
+                    <li><span class="highlight">加权总分</span> = 简单最高分×1.0 + 困难最高分×1.5 + 地狱最高分×2.0。每种模式可玩 2 次，取最高分。</li>
+                    <li>倒计时：简单 20 秒 / 困难 15 秒 / 地狱 15 秒，超时算错；最后几秒有心跳与警报提示。</li>
+                </ul>
+                <div class="mode-row">
+                    <div class="mode-tag easy">
+                        <div class="mt-name">🌿 简单模式</div>
+                        <div class="mt-info">25题 · 20秒/题<br>每题10分 · 权重×1.0</div>
+                    </div>
+                    <div class="mode-tag hard">
+                        <div class="mt-name">🔥 困难模式</div>
+                        <div class="mt-info">25题 · 15秒/题<br>每题15分 · 权重×1.5</div>
+                    </div>
+                    <div class="mode-tag hell">
+                        <div class="mt-name">💀 地狱模式</div>
+                        <div class="mt-info">25题 · 15秒/题<br>每题20分 · 权重×2.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="login-form" id="loginForm">
+                <div class="field"><label>学校</label><input id="inputSchool" placeholder="请输入学校名称"></div>
+                <div class="field"><label>班级</label><input id="inputClass" placeholder="请输入班级"></div>
+                <div class="field"><label>姓名</label><input id="inputRealName" placeholder="请输入姓名"></div>
+            </div>
+            <button class="start-btn" onclick="doLogin()">接受使命，进入长征</button>
+        </div>
+    </div>
+
+    <!-- 难度选择 -->
+    <div class="difficulty-screen hidden" id="difficultyScreen">
+        <button class="back-to-welcome" onclick="backToWelcome()">← 返回</button>
+        <button class="leaderboard-btn" onclick="openLeaderboard()">🏆 排行榜</button>
+        <h2>选择你的征程</h2>
+        <p class="desc">每一段路都是生死抉择。你准备好带领战士们走出这片血与火了吗？</p>
+        <div class="difficulty-buttons">
+            <div class="difficulty-btn easy" onclick="startGame('easy')">
+                <div class="best-score" id="bestEasy">未挑战</div>
+                <div class="icon">🌿</div>
+                <div class="name">简单模式</div>
+                <div class="info">25题 · 20秒思考<br>经典战役抉择<br>每题10分 · 权重×1.0</div>
+            </div>
+            <div class="difficulty-btn hard" onclick="startGame('hard')">
+                <div class="best-score" id="bestHard">未挑战</div>
+                <div class="icon">🔥</div>
+                <div class="name">困难模式</div>
+                <div class="info">25题 · 15秒思考<br>战略级抉择<br>每题15分 · 权重×1.5</div>
+            </div>
+            <div class="difficulty-btn hell" onclick="startGame('hell')">
+                <div class="best-score" id="bestHell">未挑战</div>
+                <div class="icon">💀</div>
+                <div class="name">地狱模式</div>
+                <div class="info">25题 · 15秒思考<br>绝境生死抉择<br>每题20分 · 权重×2.0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 排行榜弹窗 -->
+    <div class="leaderboard-overlay" id="leaderboardOverlay">
+        <div class="leaderboard-card">
+            <h3>🏆 长征英雄榜</h3>
+            <table class="leaderboard-table">
+                <thead><tr><th>排名</th><th>姓名</th><th>学校·班级</th><th>简单</th><th>困难</th><th>地狱</th><th>加权总分</th></tr></thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+            <div class="lb-close"><button onclick="closeLeaderboard()">关闭</button></div>
+        </div>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div class="game-screen" id="gameScreen" style="display:none;">
+        <div class="scene-background" id="sceneBg"></div>
+        <div class="scene-bg-icon" id="sceneBgIcon">⚔️</div>
+        <div class="scene-overlay"></div>
+        <div class="game-content">
+            <div class="status-bar">
+                <button class="exit-btn" onclick="quitGame()" title="退出本次答题（成绩不作数）">✕ 退出</button>
+                <div class="level-indicator" id="levelIndicator">第 1 题</div>
+                <div class="score-indicator" id="scoreIndicator">得分：0</div>
+            </div>
+            <div class="timer-container">
+                <div class="timer-circle" id="timerCircle">
+                    <svg width="76" height="76"><circle class="timer-bg" cx="38" cy="38" r="32"></circle><circle class="timer-progress" id="timerProgress" cx="38" cy="38" r="32" stroke-dasharray="201" stroke-dashoffset="0"></circle></svg>
+                    <div class="timer-text" id="timerText">20</div>
+                </div>
+            </div>
+            <div class="scene-description">
+                <h3><span id="sceneIcon">⚔️</span><span id="sceneTitle">场景标题</span></h3>
+                <p id="sceneDesc">场景描述...</p>
+            </div>
+            <div class="options-container" id="optionsContainer"></div>
+        </div>
+    </div>
+
+    <!-- 结果弹窗 -->
+    <div class="result-overlay" id="resultOverlay">
+        <div class="result-card">
+            <div class="result-icon" id="resultIcon">✓</div>
+            <div class="result-title" id="resultTitle">选择正确</div>
+            <div class="result-text" id="resultText"></div>
+            <div class="history-box">
+                <h4>📜 历史全貌</h4>
+                <p id="historyText"></p>
+            </div>
+            <button class="result-btn" id="resultBtn" onclick="nextLevel()">继续前进</button>
+        </div>
+    </div>
+
+    <!-- 结局画面 -->
+    <div class="end-screen" id="endScreen">
+        <div class="end-title" id="endTitle">长征胜利</div>
+        <div class="end-score" id="endScore"></div>
+        <div class="end-meaning">
+            <h3 id="endMeaningTitle">长征胜利的伟大意义</h3>
+            <p id="endMeaning1"></p>
+            <p id="endMeaning2"></p>
+            <p id="endMeaning3"></p>
+        </div>
+        <div class="march-stats" id="marchStats"></div>
+        <div class="end-buttons">
+            <button class="restart-btn submit-score-btn" onclick="submitScore()">🏆 提交成绩到排行榜</button>
+            <button class="restart-btn" onclick="backToMenu()">返回主菜单</button>
+            <button class="restart-btn" onclick="restartGame()">再走长征路</button>
+        </div>
+    </div>
+</div>
+<div class="dev-watermark">开发者 · 西安交通大学 越杰2601班 谢乙玄</div>
+<button class="mute-btn" id="muteBtn" onclick="toggleMute()" title="音效开关">🔊</button>
+
+<script>
+const IMG_API='https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?image_size=landscape_16_9&prompt=';
+function img(p){return IMG_API+encodeURIComponent(p);}
+
+/* ============ 音频系统（真实音频文件，首尾静音已裁，循环播放） ============ */
+let muted=false;
+function mkAudio(src,loop,vol){const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';return a;}
+const snd={
+ intro:mkAudio('audio/intro.mp3',true,0.45),
+ easy:mkAudio('audio/bgm_easy.mp3',true,0.5),
+ hard:mkAudio('audio/bgm_hard.mp3',true,0.5),
+ hell:mkAudio('audio/bgm_hell.mp3',true,0.55),
+ wrong:mkAudio('audio/wrong.mp3',false,0.9),
+ victory:mkAudio('audio/victory.mp3',true,0.7),
+ heart:mkAudio('audio/heartbeat.mp3',false,0.5),
+ guns:mkAudio('audio/guns.mp3',false,0.16)
+};
+let bgmTimer=null;
+function playBGM(k){
+ ['intro','easy','hard','hell','victory'].forEach(x=>{if(x!==k)snd[x].pause();});
+ if(bgmTimer){clearTimeout(bgmTimer);bgmTimer=null;}
+ if(muted)return;
+ const a=snd[k];
+ if(!a.paused)return; // 同一首已在播放则不打断
+ a.currentTime=0;
+ /* 开场音乐立即播放；其余BGM延迟0.5秒再开始 */
+ if(k==='intro'){const p=a.play();if(p)p.catch(()=>{});return;}
+ bgmTimer=setTimeout(()=>{bgmTimer=null;if(muted)return;const p=a.play();if(p)p.catch(()=>{});},500);
+}
+function playOne(k){if(muted)return;const a=snd[k];a.currentTime=0;const p=a.play();if(p)p.catch(()=>{});}
+let gunTimer=null,heartPlaying=false;
+function clearAmbient(){if(gunTimer){clearTimeout(gunTimer);gunTimer=null;}snd.guns.pause();snd.heart.pause();heartPlaying=false;}
+function scheduleGun(){
+ gunTimer=setTimeout(()=>{
+  const inGame=document.getElementById('gameScreen').style.display!=='none'&&!document.getElementById('endScreen').classList.contains('show');
+  if(!muted&&inGame){
+   const g=snd.guns;
+   g.currentTime=Math.random()*70;
+   g.play().catch(()=>{});
+   setTimeout(()=>g.pause(),5000+Math.random()*6000);
+  }
+  scheduleGun();
+ },20000+Math.random()*25000);
+}
+function startAmbient(){clearAmbient();if(muted)return;scheduleGun();}
+function heartbeatStart(){if(muted||heartPlaying)return;heartPlaying=true;const h=snd.heart;h.currentTime=0;h.play().catch(()=>{});}
+function heartbeatStop(){heartPlaying=false;snd.heart.pause();}
+/* 倒计时最后3秒的滴滴声（WebAudio合成短音） */
+let audioCtx=null;
+function initAudio(){if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}
+function playTick(){if(!audioCtx||muted)return;const t=audioCtx.currentTime;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.value=900;g.gain.setValueAtTime(0.1,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);o.connect(g).connect(audioCtx.destination);o.start(t);o.stop(t+0.09);}
+function stopAllMusic(){if(bgmTimer){clearTimeout(bgmTimer);bgmTimer=null;}['intro','easy','hard','hell','victory'].forEach(x=>snd[x].pause());clearAmbient();}
+function toggleMute(){
+ muted=!muted;document.getElementById('muteBtn').textContent=muted?'🔇':'🔊';
+ if(muted){stopAllMusic();}
+ else{
+  initAudio();
+  if(document.getElementById('endScreen').classList.contains('show')){playBGM('victory');}
+  else if(document.getElementById('gameScreen').style.display!=='none'){playBGM(gameState.difficulty);startAmbient();}
+  else{playBGM('intro');}
+ }
+}
+/* 首次点击/按键后解锁并播放开头音乐 */
+document.addEventListener('pointerdown',function firstGesture(){
+ initAudio();
+ if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){playBGM('intro');}
+ document.removeEventListener('pointerdown',firstGesture);
+});
+
+/* ============ 用户数据 ============ */
+let currentUser=null;
+function loadUser(){try{const u=localStorage.getItem('cz_user');if(u){currentUser=JSON.parse(u);fillLogin();}}catch(e){}}
+function fillLogin(){if(!currentUser)return;document.getElementById('inputSchool').value=currentUser.school||'';document.getElementById('inputClass').value=currentUser.className||'';document.getElementById('inputRealName').value=currentUser.realName||'';}
+function doLogin(){const school=document.getElementById('inputSchool').value.trim();const cls=document.getElementById('inputClass').value.trim();const realName=document.getElementById('inputRealName').value.trim();if(!school||!cls||!realName){alert('请完整填写学校、班级和姓名');return;}initAudio();playBGM('intro');currentUser={school,className:cls,realName};localStorage.setItem('cz_user',JSON.stringify(currentUser));document.getElementById('welcomeOverlay').classList.add('hidden');document.getElementById('difficultyScreen').classList.remove('hidden');updateDifficultyBest();}
+function backToWelcome(){document.getElementById('difficultyScreen').classList.add('hidden');document.getElementById('welcomeOverlay').classList.remove('hidden');}
+function backToMenu(){stopAllMusic();document.getElementById('endScreen').classList.remove('show');document.getElementById('gameScreen').style.display='none';document.getElementById('difficultyScreen').classList.remove('hidden');updateDifficultyBest();playBGM('intro');}
+/* 飞书共享排行榜 */
+const FORM_URL='https://my.feishu.cn/share/base/shrc6Y3K7lWZyb7UBbOgyXlH5Ug';
+const LB_URL='https://my.feishu.cn/base/JRwcbgi3vavKiHszeV6cBgvu63c?table=tblZ0rrSRDIqmc5Q&view=vew2JcitHS';
+function submitScore(){window.open(FORM_URL,'_blank');}
+function openLeaderboard(){window.open(LB_URL,'_blank');}
+
+/* ============ 排行榜（服务器共享，所有人可见；离线时回退本地） ============ */
+const LB_KEY='cz_leaderboard';
+let lbCache=[];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function getLocalLeaderboard(){try{const d=localStorage.getItem(LB_KEY);return d?JSON.parse(d):[];}catch(e){return[];}}
+function saveLocalLeaderboard(d){try{localStorage.setItem(LB_KEY,JSON.stringify(d));}catch(e){}}
+let serverOnline=true;
+async function fetchLeaderboard(){
+ try{const r=await fetch('api/leaderboard');if(r.ok){serverOnline=true;lbCache=await r.json();saveLocalLeaderboard(lbCache);return lbCache;}}catch(e){serverOnline=false;}
+ lbCache=getLocalLeaderboard();return lbCache;
+}
+async function recordScore(diff,score){
+ if(!currentUser)return;
+ try{
+  const r=await fetch('api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...currentUser,difficulty:diff,score})});
+  if(r.ok){lbCache=await r.json();saveLocalLeaderboard(lbCache);return;}
+ }catch(e){}
+ /* 离线兜底：仅写本地 */
+ const lb=getLocalLeaderboard();
+ let rec=lb.find(r=>r.realName===currentUser.realName&&r.className===currentUser.className);
+ if(!rec){rec={...currentUser,scores:{easy:[],hard:[],hell:[]}};lb.push(rec);}
+ rec.scores[diff].push(score);if(rec.scores[diff].length>2)rec.scores[diff].shift();rec.scores[diff].sort((a,b)=>b-a);
+ rec.bestEasy=Math.max(0,...rec.scores.easy);rec.bestHard=Math.max(0,...rec.scores.hard);rec.bestHell=Math.max(0,...rec.scores.hell);
+ rec.totalWeighted=rec.bestEasy*1.0+rec.bestHard*1.5+rec.bestHell*2.0;rec.date=new Date().toLocaleString();
+ saveLocalLeaderboard(lb);lbCache=lb;
+}
+async function showLeaderboard(){
+ const tbody=document.getElementById('leaderboardBody');
+ tbody.innerHTML='<tr><td colspan="7" style="color:#999">加载中…</td></tr>';
+ document.getElementById('leaderboardOverlay').classList.add('show');
+ const lb=(await fetchLeaderboard()).slice().sort((a,b)=>b.totalWeighted-a.totalWeighted);
+ tbody.innerHTML='';
+ if(!serverOnline){
+  tbody.innerHTML='<tr><td colspan="7" style="color:#ff8c69;text-align:center;padding:20px">⚠️ 服务器未连接，当前为本地离线数据<br><span style="font-size:13px;color:#aaa">请通过 http://localhost:8081/ 访问，并保持 server.py 运行，才能同步所有人的成绩</span></td></tr>';
+ }
+ if(!lb.length){if(!tbody.innerHTML)tbody.innerHTML='<tr><td colspan="7" style="color:#999">还没有人上榜，快来当第一个！</td></tr>';return;}
+ lb.slice(0,20).forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${esc(r.realName)}</td><td>${esc(r.school)}·${esc(r.className)}</td><td>${r.bestEasy||0}</td><td>${r.bestHard||0}</td><td>${r.bestHell||0}</td><td style="color:#ffd700;font-weight:bold">${(r.totalWeighted||0).toFixed(1)}</td>`;tbody.appendChild(tr);});
+}
+function closeLeaderboard(){document.getElementById('leaderboardOverlay').classList.remove('show');}
+async function updateDifficultyBest(){
+ if(!currentUser)return;
+ const lb=await fetchLeaderboard();
+ const rec=lb.find(r=>r.realName===currentUser.realName&&r.className===currentUser.className);
+ document.getElementById('bestEasy').textContent=rec&&rec.scores.easy.length?`最高${Math.max(...rec.scores.easy)}分`:'未挑战';
+ document.getElementById('bestHard').textContent=rec&&rec.scores.hard.length?`最高${Math.max(...rec.scores.hard)}分`:'未挑战';
+ document.getElementById('bestHell').textContent=rec&&rec.scores.hell.length?`最高${Math.max(...rec.scores.hell)}分`:'未挑战';
+}
+
+/* ============ 简单模式题库（15题） ============ */
+const EASY_QUESTIONS=[
+{icon:"🌊",title:"湘江血战 · 1934年11月",desc:"湘江江面被敌机轰炸，浮桥摇摇欲坠。队伍拖着大量印刷机、兵工厂设备，行动迟缓，身后敌军越来越近。作为指挥员，你必须立刻决断——",img:'images/e1.jpg',options:[{text:"扔掉全部辎重，轻装快速渡江，保存有生力量",correct:true,result:"正确！甩掉沉重辎重后部队机动性大增。长征初期'搬家式'转移让红军付出了血的代价，轻装才能求生。"},{text:"辎重是革命的财产，组织人墙誓死保卫设备过江",correct:false,result:"错误！抬着笨重设备的部队行动如蜗牛，成为敌军活靶子。保住人，才保得住革命。"},{text:"就地构筑工事，回头与追兵决一死战",correct:false,result:"错误！此时敌军兵力十倍于我，且占据有利地形，决战正中敌人下怀。"}],history:"1934年11月27日至12月1日，中央红军在广西湘江两岸与国民党军激战五昼夜。这是长征中最惨烈的一战：红军从出发时的8.6万余人锐减至3万余人，红八军团几乎全军覆没，红五军团第三十四师师长陈树湘断肠明志、壮烈牺牲。当地百姓说：'三年不饮湘江水，十年不食湘江鱼。'湘江战役的惨重损失，直接促使全党全军反思错误军事路线，为遵义会议的召开埋下了伏笔。"},
+{icon:"🏛️",title:"遵义转折 · 1935年1月",desc:"部队进入贵州遵义城，获得宝贵休整。连日的惨败让全军上下都在追问：仗为什么越打越被动？下一步到底该听谁的指挥？",img:'images/e2.jpg',options:[{text:"召开会议总结失败教训，改组军事指挥",correct:true,result:"正确！遵义会议结束了'左'倾教条主义在中央的统治，事实上确立了毛泽东在党中央和红军的领导地位。"},{text:"继续执行原定计划，去湘西与红二、六军团会合",correct:false,result:"错误！蒋介石已在湘西布下口袋阵，继续北上等于自投罗网——这正是通道会议已经否决的方案。"},{text:"部队就地分散打游击，化整为零保存实力",correct:false,result:"错误！主力红军一旦分散，将被敌军各个击破，革命火种可能就此熄灭。"}],history:"1935年1月15日至17日，中共中央政治局在贵州遵义召开扩大会议。会议集中解决了当时最紧迫的军事问题和组织问题，增选毛泽东为中央政治局常委，取消了博古、李德的最高军事指挥权。遵义会议在极端危急的关头挽救了党、挽救了红军、挽救了中国革命，是党的历史上一个生死攸关的转折点，标志着中国共产党从幼年走向成熟。"},
+{icon:"🌉",title:"飞夺泸定桥 · 1935年5月",desc:"大渡河咆哮奔腾，泸定桥的木板已被敌军拆除，只剩13根光溜溜的铁索悬在半空。对岸机枪喷吐火舌，而数万红军只有夺桥这一条生路——",img:'images/e3.jpg',options:[{text:"组织突击队攀铁索强攻，后续部队边跟进边铺板",correct:true,result:"正确！22名勇士冒着弹雨攀索冲锋，后续部队抱着木板边铺边打，一举夺下泸定桥。"},{text:"架设浮桥渡江，避开敌军火力",correct:false,result:"错误！大渡河水深流急，根本无法架设浮桥；且在敌火力下架桥等于送死。"},{text:"沿河岸继续寻找其他渡口，不与其硬拼",correct:false,result:"错误！敌军追兵已至，时间以小时计算，红军没有寻找新渡口的余地。"}],history:"1935年5月29日，红四团一昼夜奔袭240里赶到泸定桥。下午4时，22名突击队员在全团火力掩护下攀踏悬空铁索冲向对岸，后续三连抱着木板铺桥。激战两小时，红军夺桥成功。飞夺泸定桥粉碎了蒋介石让红军成为'第二个石达开'的迷梦。1863年，太平天国翼王石达开正是在大渡河畔全军覆没；72年后，红军在同一地点创造了奇迹。"},
+{icon:"⛰️",title:"翻越夹金山 · 1935年6月",desc:"夹金山终年积雪，当地人说'鸟儿飞不过，神仙也难攀'。战士们身着单衣、脚蹬草鞋，有人已经出现高原反应。山下追兵的枪声隐约可闻——",img:'images/e4.jpg',options:[{text:"吃辣椒、喝烈酒驱寒，一鼓作气快速翻越，绝不停留",correct:true,result:"正确！红军靠辣椒水御寒、互相搀扶，快速通过死亡地带。在雪山上停留就等于永远留下。"},{text:"在半山腰背风处扎营过夜，养足精神再登顶",correct:false,result:"错误！雪山上气温夜间骤降至零下几十度，单衣扎营意味着大面积冻死。"},{text:"等待后方筹集棉衣后再统一翻山",correct:false,result:"错误！敌军追兵就在山下，等棉衣就是等包围，只能以血肉之躯硬闯天险。"}],history:"1935年6月，中央红军开始翻越长征途中第一座大雪山——夹金山（海拔4114米）。许多战士坐下休息后再也没能站起来。据不完全统计，整个长征中红军翻越海拔4000米以上的雪山20余座。翻越夹金山后，中央红军与红四方面军在四川懋功胜利会师，两支主力红军会合时相拥而泣。"},
+{icon:"🌾",title:"草地生死 · 1935年8月",desc:"茫茫松潘草地，部队断粮多日。前方出现一片不知名的野菜，饥饿的战士们眼睛都亮了。但草地上毒草丛生，吃错一口就可能送命——",img:'images/e5.jpg',options:[{text:"党员骨干先尝，确认无毒后再让战士们采食",correct:true,result:"正确！'尝草先试'是草地里的真实规矩，许多党员为试毒草献出了生命。"},{text:"饿极了顾不了那么多，大家分头采食",correct:false,result:"错误！盲目采食毒草会造成集体中毒，可能比饥饿更快夺走全连性命。"},{text:"野菜不能冒险，宁可饿着继续赶路",correct:false,result:"错误！草地行军还需数日，完全断粮会让战士连走路的力气都没有。"}],history:"1935年8月，红军进入松潘大草地。这里其实是高原湿地，沼泽密布、气候恶劣、渺无人烟。红军吃草根、煮皮带、咽野菜，许多人因误食毒草牺牲。张思德（后来为人民服务的典范）当年就主动承担'尝百草'的任务，中毒昏迷后被抢救过来。过草地短短数日，红军非战斗减员上万人，是长征中最艰难的行程之一。"},
+{icon:"🤝",title:"彝海结盟 · 1935年5月",desc:"进入大凉山彝族区，当地武装堵住了去路，对红军充满戒备。敌军造谣说红军要'抢粮抢人'。硬闯要流血，绕路没时间——",img:'images/e6.jpg',options:[{text:"严守纪律秋毫无犯，与彝族首领谈判结盟",correct:true,result:"正确！刘伯承与彝族果基家支首领小叶丹在彝海边歃血为盟，红军顺利通过彝区。"},{text:"强行武力开路，速战速决冲过去",correct:false,result:"错误！与彝族冲突既违背民族政策，又会拖延时间让追兵赶到。"},{text:"拿出银元粮食收买部落，买路通过",correct:false,result:"错误！彝族重信义，单纯收买会被视为轻视与侮辱，反而激化矛盾。"}],history:"1935年5月22日，红军总参谋长刘伯承与彝族果基家支首领小叶丹在彝海边以水代酒、歃血为盟，结为兄弟。红军帮助彝族建立'中国夷民红军沽鸡支队'，小叶丹出任支队长。彝海结盟是党的民族政策的成功实践，成为民族团结的千古佳话。1942年，小叶丹为保护刘伯承赠予的队旗而牺牲，那面旗帜如今珍藏在中国人民革命军事博物馆。"},
+{icon:"⚡",title:"突破腊子口 · 1935年9月",desc:"腊子口宽仅30米，两侧悬崖如刀削，敌军在桥头修筑碉堡，号称'一夫当关，万夫莫开'。这是红军北上的最后一道天险——",img:'images/e7.jpg',options:[{text:"正面佯攻牵制，派攀岩能手从悬崖迂回敌后",correct:true,result:"正确！一名外号'云贵川'的苗族战士攀上绝壁放下绳索，突击队从天而降，两面夹击破敌。"},{text:"集中全部兵力火力，正面强攻碉堡",correct:false,result:"错误！隘口正面火力无法展开，强攻只会成为敌军机枪的活靶子。"},{text:"长期围困碉堡，等待敌军断粮投降",correct:false,result:"错误！敌军援军正在赶来，红军耗不起时间，必须速战速决。"}],history:"1935年9月16日至17日，红四团攻打甘肃腊子口。一位绰号'云贵川'的苗族小战士凭一根带铁钩的长竿攀上悬崖，放下绳索，战士们攀崖迂回到敌碉堡上方，手榴弹从天而降。腊子口一开，红军进入甘肃的大门豁然开朗。聂荣臻后来评价：'腊子口一战，北上的通道打开了。如果腊子口打不开，我军往南不好回，往北又出不去，无论军事上政治上，都会处于进退失据的境地。'"},
+{icon:"🩹",title:"担架上的抉择",desc:"一名重伤员昏迷不醒，需要两名战士抬担架。但部队必须在天亮前赶到预定地点，抬担架会拖慢整个连队。战士们的体力也已到极限——",img:'images/e8.jpg',options:[{text:"全连轮流抬，绝不丢下任何一个战友",correct:true,result:"正确！'不抛弃、不放弃'是红军的铁律，正是这份生死与共的情谊凝聚了队伍。"},{text:"给伤员留下干粮和枪，请他就地隐蔽养伤",correct:false,result:"错误！重伤员独自留在敌区几乎无生还可能，这实际上是放弃战友。"},{text:"把担架队留下来慢慢走，主力加速前进",correct:false,result:"错误！脱离主力的担架队在敌情复杂的地区寸步难行，等于把伤员和担架员一起送入险境。"}],history:"长征途中，担架队是最辛苦的岗位之一。许多干部坐着担架出发，最后却把自己的担架让给重伤员。王稼祥腹部重伤，整个长征大多躺在担架上，毛泽东也因伤病坐过担架——著名的'担架上的谋略'，正是张闻天、王稼祥与毛泽东在担架上讨论出挽救红军的转机。红军还规定：首长的马匹优先让给伤病员。这种官兵一致、生死与共的传统，是红军拖不垮、打不散的重要原因。"},
+{icon:"🧭",title:"草地迷途",desc:"草地里乌云压顶，方向难辨，脚下的草甸看似坚实，踩错一步就是吞人的泥潭。向导也已经不敢确定方向，全连的希望压在你肩上——",img:'images/e9.jpg',options:[{text:"找到先头部队留下的路标，用长棍探路成纵队跟进",correct:true,result:"正确！先头部队沿途插下标记指引方向，用竹竿探路、单纵队跟进是草地行军的标准做法。"},{text:"看太阳辨别方向，朝北方直线穿越",correct:false,result:"错误！草地常年阴雨不见太阳，且'直线'往往穿过最深的沼泽区。"},{text:"分散成小组各自寻找出路，总有一组能出去",correct:false,result:"错误！分散后一旦有人陷入沼泽无人施救，分散突围在草地等于分散送死。"}],history:"松潘草地面积约1.5万平方公里，海拔3500米以上。先头部队用树枝、草把在相对坚实的路线上做标记，后续部队沿标记行进。即便如此，陷没沼泽牺牲的战士不计其数——有的战士陷到胸口还把枪举过头顶递给战友。红军过草地历时约7天，许多部队是沿着前面同志的遗体和路标走出来的。"},
+{icon:"🎉",title:"吴起镇切尾巴 · 1935年10月",desc:"历经一年，中央红军终于抵达陕北吴起镇！但敌军三个骑兵团像尾巴一样死死咬在身后。打，还是不打——",img:'images/e10.jpg',options:[{text:"利用沟谷地形设伏，坚决砍掉这条'尾巴'",correct:true,result:"正确！彭德怀指挥吴起镇战役歼灭追敌，毛泽东挥笔写下'谁敢横刀立马，唯我彭大将军'。"},{text:"刚落脚不宜再战，继续转移甩开敌军",correct:false,result:"错误！敌骑兵机动性远胜步兵，一味撤退只会被反复袭扰，无法立足。"},{text:"进驻镇中构筑工事，固守待援",correct:false,result:"错误！初到陕北人生地不熟，消极固守只会让敌军从容调集更多兵力。"}],history:"1935年10月19日，中央红军到达陕北吴起镇，21日打响'切尾巴'战斗，歼灭敌军一个团、击溃三个团，缴获战马数百匹，为中央红军长征画上圆满句号。1936年10月，红一、二、四方面军先后在甘肃会宁、将台堡会师，万里长征胜利结束。毛泽东说：'长征是宣言书，长征是宣传队，长征是播种机。'"},
+{icon:"🔥",title:"于都河畔 · 1934年10月",desc:"出发的命令终于下达。于都河上没有桥，只有临时搭起的浮桥。战士们身后是苏区的父老乡亲，前方是未知的征途。队伍中有人低声啜泣，有人默默回头。作为指挥员——",img:'images/e11.jpg',options:[{text:"率先踏上浮桥，用坚定的步伐稳定军心",correct:true,result:"正确！指挥员身先士卒是红军的老传统。干部的背影，就是战士的方向。"},{text:"让妇女和儿童先过河，主力随后跟进",correct:false,result:"错误！这是军事转移，不是 civilian evacuation。妇女队和留守人员另有安排，主力必须快速通过才能避免敌机轰炸。"},{text:"在河边召开简短动员会，等大家情绪平复再出发",correct:false,result:"错误！敌机随时会来，夜色是唯一的掩护。在河边停留越久，被轰炸的风险越大。"}],history:"1934年10月17日至20日，中央红军主力从江西于都河出发开始长征。于都人民拆下自家的门板、床板、甚至寿材，为红军搭起五座浮桥。苏区百姓 '母送子、妻送郎'，连夜为红军赶制草鞋、筹备干粮。于都河畔的《十送红军》从此传唱全国。出发时8.6万人的队伍里，平均每300米就倒下一名红军战士——二万五千里长征，是名副其实的生死之路。"},
+{icon:"💣",title:"突破封锁线 · 1934年11月",desc:"第一道封锁线就在前方。敌军构筑了碉堡群，火力交叉，公路也被破坏。大部队携带的辎重让行军速度如同蜗牛。夜已深，侦察兵回报：敌军的巡逻间隙只有不到一小时——",img:'images/e12.jpg',options:[{text:"弃掉不必要的辎重，利用夜暗和敌巡逻间隙快速通过",correct:true,result:"正确！时间就是生命。在敌军火力网中，速度是最可靠的盾牌。"},{text:"组织爆破组炸掉碉堡，强行打开缺口",correct:false,result:"错误！爆破会惊动纵深敌军，引来援兵合围。长征初期红军硬碰硬吃过太多亏。"},{text:"绕道山区小路，避开碉堡群",correct:false,result:"错误！山区小路崎岖难行，带着辎重更慢，且可能迷失方向错过与后续部队的会合点。"}],history:"中央红军突破国民党军设置的四道封锁线，付出了惨重代价。特别是突破第四道封锁线——湘江防线时，红军从8.6万人锐减到3万余人。血的教训让红军彻底明白：带着'家当'打仗，等于带着棺材走路。'左'倾教条主义的'搬家式'转移，是湘江惨败的重要原因之一。"},
+{icon:"🏔️",title:"老山界 · 1934年12月",desc:"老山界是五岭山脉中最险峻的一座。山路狭窄，仅容一人通过，一侧是峭壁，一侧是深渊。夜间行军，火把连成一条蜿蜒的火龙。突然前方传来消息：隘口被敌军一个连堵住——",img:'images/e13.jpg',options:[{text:"派小分队攀悬崖迂回敌后，主力正面佯攻",correct:true,result:"正确！老山界战斗中，红军正是用迂回战术击溃守敌，打通了前进道路。"},{text:"火把熄灭摸黑强攻，趁敌军不备冲过去",correct:false,result:"错误！熄灭火把在悬崖山路上等于集体坠崖，强攻正面也展不开兵力。"},{text:"原地待命等天亮看清地形再进攻",correct:false,result:"错误！天亮后敌军飞机和援兵都会到来，拖延就是自取灭亡。"}],history:"1934年12月，红军翻越老山界。陆定一后来写下著名的《老山界》一文，描写了'之'字形的火把队伍在半山腰蜿蜒前进的壮观场面。老山界海拔约2100米，是红军长征中翻越的第一座难走的大山。毛泽东在《十六字令》中写道：'山，快马加鞭未下鞍。惊回首，离天三尺三。'正是翻越老山界时的真实写照。"},
+{icon:"⚓",title:"强渡乌江 · 1935年1月",desc:"乌江水流湍急，两岸悬崖陡峭。敌军烧掉了江面上的浮桥，渡船也全部拖走。身后追兵越来越近，天亮前必须过江——",img:'images/e14.jpg',options:[{text:"砍竹子扎竹筏，组织突击队夜间强渡",correct:true,result:"正确！红军战士砍竹子扎竹筏，冒着严寒和敌火强渡乌江，一举突破天险。"},{text:"泅渡！会水的战士拉着绳子先过去架索",correct:false,result:"错误！乌江寒冬水冷刺骨，泅渡几分钟就会冻僵，且江面宽数百米，人力无法直接泅渡。"},{text:"沿江寻找水浅处徒步涉水",correct:false,result:"错误！乌江水深流急，不存在可以徒涉的浅滩，这是贵州最险峻的河流之一。"}],history:"1935年1月，中央红军在贵州遵义附近的江界河、回龙场等地强渡乌江。红军战士在寒风凛冽的冬夜，砍竹子、扎竹筏、架浮桥，冒着对岸敌军的枪林弹雨强渡成功。乌江之战为红军进军遵义、召开具有历史转折意义的遵义会议创造了条件。刘伯承后来回忆：'强渡乌江是长征中关键的一仗。'"},
+{icon:"🌙",title:"激战娄山关 · 1935年2月",desc:"二渡赤水后，红军回师黔北。娄山关是遵义的北大门，雄踞娄山山脉最高峰，自古'一夫当关，万夫莫开'。黔军重兵把守，关下只有一条蜿蜒的公路。如果不能迅速拿下——",img:'images/e15.jpg',options:[{text:"正面强攻牵制，主力从两侧悬崖攀援迂回敌后",correct:true,result:"正确！红三军团一部正面猛攻，主力从两侧悬崖小路迂回，两面夹击攻克娄山关。"},{text:"用迫击炮轰击关口，炸开通道",correct:false,result:"错误！红军弹药奇缺，且敌军工事坚固，几发炮弹解决不了问题，反而会暴露主攻方向。"},{text:"绕过娄山关，直接从山间小路进逼遵义",correct:false,result:"错误！山间小路无法通行大部队，且敌军可从娄山关侧击红军后路，必须拿下这个咽喉。"}],history:"1935年2月25日至26日，红三军团发起娄山关战斗。彭德怀亲临前线指挥，红军战士冒着枪林弹雨攀上悬崖，从侧后突袭敌军。此役歼灭和击溃黔军四个团，是长征以来第一个大胜仗。毛泽东在战斗胜利后登上娄山关，写下了那首气壮山河的《忆秦娥·娄山关》：'雄关漫道真如铁，而今迈步从头越。'"},
+{icon:"🛏️",title:"半条被子 · 1934年11月",desc:"湖南汝城沙洲村，三名女红军借宿徐解秀家。徐家穷得连一床完整的被子都没有，寒冬将至，女红军们自己也只有一床被子。部队出发前，她们做出了一个让老乡记了一辈子的决定——",options:[{text:"用剪刀把被子剪成两半，留下半条给老乡",correct:true,result:"正确！这就是'半条被子'的故事。什么是共产党？就是自己有一条被子，也要剪下半条给老百姓的人。"},{text:"把整床被子都留给老乡，自己挨冻行军",correct:false,result:"错误！情分可贵，但整床留下三人将完全无被，且老乡目标太大容易受牵连。"},{text:"留下几块银元，让老乡自己去买被子",correct:false,result:"错误！战乱年月有钱也买不到，半条被子才是立刻能用得上的温暖。"}],history:"1934年11月，3名女红军借宿湖南汝城县沙洲村徐解秀家，临走时把仅有的一床被子剪下一半留给她。徐解秀老人后来回忆：'什么是共产党？共产党就是自己有一条被子，也要剪下半条给老百姓的人。'2016年，习近平总书记在纪念红军长征胜利80周年大会上专门讲述了'半条被子'的故事，它生动诠释了中国共产党人民至上的初心。"},
+{icon:"🥣",title:"一袋干粮",desc:"过草地时，战士谢益先发现路边一对母子饿得奄奄一息。他摸了摸自己仅剩的一小袋干粮——这是他未来几天唯一的口粮。看着怀里的孩子，他做出了选择——",options:[{text:"把干粮袋悄悄留给母子，自己靠野菜坚持行军",correct:true,result:"正确！谢益先把干粮让给群众，自己却因饥饿长眠草地。那位母亲走出草地后，到处打听这位'谢红军'。"},{text:"分出一半，自己留一半，两不耽误",correct:false,result:"错误！看似周全，但半袋粮救不了急难中的母子，而谢益先选择了把生的希望全部让给群众。"},{text:"部队纪律不许私分口粮，只能含泪离开",correct:false,result:"错误！红军纪律保护群众利益，救群众于死地正是这支军队的宗旨，而不是相反。"}],history:"红四方面军战士谢益先过草地时，把自己仅剩的一袋干粮悄悄留给了饥饿的母子，自己每天只吃野菜喝冷水，最终长眠在草地上。那位母亲随红军走出草地后，逢人便打听'谢红军'。萧华将军在回忆录里写道：'谢益先同志的那袋干粮，装的是人民军队对人民的爱。'"},
+{icon:"🐟",title:"金色的鱼钩",desc:"过草地时，老班长奉命照顾三名小病号，粮食很快吃光。他用缝衣针弯成鱼钩，每天煮鲜美的鱼汤给病号喝，自己却偷偷嚼草根、啃鱼骨。当你发现这个秘密——",options:[{text:"假装没发现，配合班长，同时把自己的野菜汤分给他",correct:true,result:"正确！顾全班长的苦心，又用自己的方式照顾他，这是草地里战友间的默契与温情。"},{text:"当面揭穿，逼着他一起吃鱼",correct:false,result:"错误！老班长性格倔强，当面揭穿只会让他拒绝再喝鱼汤、病情加重。"},{text:"向指导员报告，要求换人照顾",correct:false,result:"错误！报告等于否定班长，也会动摇小病号们的信心。"}],history:"《金色的鱼钩》源自长征真实故事：一位炊事班长用缝衣针弯成鱼钩钓鱼，把鱼汤全部让给三名小病号，自己偷偷吃草根和鱼骨头，最终在走出草地前夕牺牲。他留下的那枚鱼钩至今陈列在中国人民革命军事博物馆——锈迹斑斑，却被称为'金色的鱼钩'。"},
+{icon:"🧥",title:"丰碑",desc:"风雪中，队伍发现一名老战士冻僵在树旁，衣服单薄破旧，像一尊塑像。将军怒吼：把军需处长给我叫来！为什么不给老同志发棉衣？随行的人含泪说出了真相——",options:[{text:"他就是军需处长，棉衣全都让给了战友",correct:true,result:"正确！他掌管全部棉衣，却把自己排在最后。大雪覆盖了他的身体，他成了一座晶莹的丰碑。"},{text:"他是掉队的俘虏兵，不在被装发放名册里",correct:false,result:"错误！红军对待俘虏一视同仁，冻僵的这位正是掌管物资的军需处长本人。"},{text:"棉衣还在运输队，他自己没来得及领",correct:false,result:"错误！真相更震撼：他就是发放棉衣的人，却把每件棉衣都让给了战士。"}],history:"长征中，一位军需处长把棉衣全部分给战友，自己穿着单衣冻死在雪山树下。将军得知冻僵者就是军需处长后，缓缓举起右手敬了一个军礼。大雪很快覆盖了他的身体，他化作一座不朽的丰碑——这就是红军干部：管被装的人，穿得最少；掌生死的人，把生让给别人。"},
+{icon:"🏃",title:"昼夜奔袭240里",desc:"夺取泸定桥的命令：一天之内赶到240里外！大雨倾盆，山路泥泞，对岸敌军也打着火把向泸定桥增援。作为红四团指挥员——",options:[{text:"也点起火把强行军，用号语伪装成敌军友邻，雨夜不停",correct:true,result:"正确！红军隔河与敌军火把并行，用俘虏的号兵号语骗过对方，抢先赶到泸定桥。"},{text:"熄灭摸黑行军，避免暴露目标",correct:false,result:"错误！摸黑走泥泞山路根本赶不到，到不了泸定桥，对岸数万红军就成了石达开。"},{text:"等雨停天亮再急行军",correct:false,result:"错误！战机以小时计算，多等一个时辰，敌军就会先到一步。"}],history:"1935年5月28日，红四团接到命令：29日早晨必须夺下泸定桥！部队一昼夜奔袭240里。雨夜中对岸川军也在增援，红军索性点起火把，用号兵伪装成'自家部队'，与敌军隔河并行了几十里。对方做梦也没想到，这支打着火把急行军的队伍，就是明天夺桥的红军。"},
+{icon:"🍠",title:"红薯地里的银元",desc:"急行军经过一片红薯地，战士们饿极了，可地里找不到老乡，部队又不能停留。指导员给出的处置是——",options:[{text:"挖了红薯，在原地留下银元和字条，绝不白拿",correct:true,result:"正确！吃了群众的东西照价付钱，找不到人就把钱留在原地——这就是红军纪律。"},{text:"军情紧急，先挖了吃，革命胜利后再还",correct:false,result:"错误！'以后再还'对群众就是一句空话，纪律必须当场兑现。"},{text:"再饿也不许动群众一块红薯",correct:false,result:"错误！纪律是'不白拿'，不是不顾实际；留钱购买正是纪律中的人情。"}],history:"长征途中，红军严格执行'三大纪律八项注意'。经过菜地橘园，吃了群众的东西一定留下银元；找不到主人就把钱包好压在土里或请邻里转交。湖南、贵州的老乡后来在自家红薯地里发现银元和'老乡，我们买了你的红薯'的字条，从此把这支军队称作'菩萨兵'。"},
+{icon:"✈️",title:"敌机临空",desc:"湘江边，敌机突然临空！队伍正走在开阔河滩上，四周有稀疏树丛，也有通向山脚的小路。防空号吹响的一瞬间——",options:[{text:"立即疏散到路边树丛就地卧倒，马匹物资靠树隐蔽",correct:true,result:"正确！卧倒、隐蔽、不动——这是红军用鲜血换来的防空三原则。"},{text:"拼命奔跑冲出河滩，越快越好",correct:false,result:"错误：跑动的人群是飞行员最爱打的活靶，乱跑比卧倒危险十倍。"},{text:"全团举起步枪对空齐射",correct:false,result:"错误！轻武器很难击落敌机，齐射反而暴露部队位置。"}],history:"长征中的红军没有制空权，敌机轰炸是最大威胁之一。红军总结出防空原则：听号音立即隐蔽、利用地形地物、卧倒不动。湘江战役中，正是因为辎重堵塞道路、部队无法及时疏散，空袭造成惨重伤亡——血的教训，凝成了铁的纪律。"},
+{icon:"🔦",title:"火把的学问",desc:"夜间山路行军，不断有人滑倒掉队。连长下令打火把，可天边有敌机夜航的灯光。正确的做法是——",options:[{text:"允许打火把保持间距，设防空哨，听到警报立即熄灭",correct:true,result:"正确！既防掉队又防敌机：火把照路、哨兵管天、警报一响整条火龙瞬间熄灭。"},{text:"全程禁止火把，全部摸黑行军",correct:false,result:"错误！雪山夜路摸黑会大量坠崖掉队，因噎废食要不得。"},{text:"火把越多越好，把整条山路照亮",correct:false,result:"错误！火光长龙是空中最好的轰炸目标。"}],history:"红军夜行军有严格的火把制度：允许点火把防掉队，但必须派出对空警戒哨，发现敌机立即熄火卧倒。翻越老山界时，陆定一记录了'之'字形火把在山腰蜿蜒、警报一响整条火龙瞬间熄灭的壮观场面——高度的组织纪律性，让红军在敌机威胁下依然保持行军速度。"},
+{icon:"🧣",title:"雪山上的毛毯",desc:"翻雪山前你领到一条薄毛毯。身边的通讯员小战士只有单衣，已经开始发抖；而你的关节炎也犯了，没有毛毯可能翻不过这座山——",options:[{text:"把毛毯让给小战士，自己靠辣椒水和行军硬扛",correct:true,result:"正确！把生的希望让给战友，是红军干部党员的自觉。"},{text:"两人合盖，轮流休息",correct:false,result:"错误！雪山上不能停留，'轮流休息'在死亡地带根本无法实现。"},{text:"干部倒下损失更大，毛毯应该留给自己",correct:false,result:"错误！红军的逻辑正相反：干部的责任是保护战士，而不是优先保护自己。"}],history:"长征中'让衣让被'是干部党员的自觉：朱德把马让给伤员自己步行；警卫员给周恩来找来的旧毛毯，他又转送给冻得发抖的战士。官兵一致、生死与共，正是这种'把温暖让给战友'的传统，让衣衫褴褛的队伍始终没有散。"},
+{icon:"🚩",title:"会宁大会师",desc:"1936年10月，三大主力红军在会宁会师！战士们操着不同口音、穿着不同颜色的军装，有人激动得举枪就要朝天鸣放。作为现场指挥员——",options:[{text:"组织联欢、统一号令，不许随意鸣枪浪费弹药",correct:true,result:"正确！尽情联欢但严守纪律：不鸣枪、不酗酒、不忘警戒，喜悦要转化成新的战斗力。"},{text:"允许全军鸣枪庆祝，宣泄两年的压抑",correct:false,result:"错误！弹药极其宝贵，枪声还可能引来敌机和残敌。"},{text:"立即合编打散原建制",correct:false,result:"错误！整编需中央统一部署，现场强行合编只会造成混乱。"}],history:"1936年10月会宁、将台堡会师，三大主力结束两年分头转战。会师大会红旗如海、歌声震天，但庆祝活动严守纪律：不鸣枪、不酗酒、不忘警戒。会师后红军随即发起山城堡战役再挫胡宗南——团结与纪律，让会师的喜悦转化成了开创抗日新局面的力量。"}
+];
+
+/* ============ 困难模式题库（15题） ============ */
+const HARD_QUESTIONS=[
+{icon:"🧭",title:"通道转兵 · 1934年12月",desc:"湘江惨败后，红军行至湖南通道。原定计划是北上湘西，与贺龙的红二、六军团会合。但情报显示：蒋介石已判明我军意图，在湘西布下五六倍于我的口袋阵。会上争论激烈——",img:'images/h1.jpg',options:[{text:"放弃北上方针，转兵西进敌人空虚的贵州",correct:true,result:"正确！毛泽东力主'避实击虚'西进贵州，通道转兵让红军躲开了口袋阵，是长征转折的开始。"},{text:"按原计划北上湘西，那里有根据地接应",correct:false,result:"错误！敌军就等着红军钻进湘西口袋。此方案看似有接应最稳妥，实则通向覆灭。"},{text:"南下广西山区休整，伺机再图发展",correct:false,result:"错误！广西是桂系地盘，民情地形皆不利，南下只是换一个方向的死路。"},{text:"东返江西，重回中央苏区",correct:false,result:"错误！苏区已被敌军重兵占领经营，回头路早被堵死。"}],history:"1934年12月12日，中央负责人在湖南通道召开紧急会议。李德、博古坚持北上湘西，毛泽东力陈：湘西有敌重兵口袋，必须西进贵州。多数同志支持了毛泽东的主张。12月18日黎平会议正式确认转兵贵州。通道转兵是红军长征中第一次否定'左'倾领导的军事行动，为遵义会议的胜利召开拉开了序幕——可以说，没有通道转兵，就没有遵义会议。"},
+{icon:"⚔️",title:"土城失利之后 · 1935年1月",desc:"遵义会议刚结束，红军在土城与川军激战。原以为敌军只有4个团，交火后才发现是6个团万余人，且援兵将至。原定的北渡长江计划已不可能实现，部队有被合围的危险——",img:'images/h2.jpg',options:[{text:"果断撤出战斗，西渡赤水河，跳出合围再寻机",correct:true,result:"正确！这就是一渡赤水。毛泽东后来说土城之战是他'得意之笔'四渡赤水的起点——打不过就走，走是为了更好地打。"},{text:"投入预备队硬拼，趁敌军立足未稳吃掉它",correct:false,result:"错误！敌军是川军精锐且援兵不断，硬拼会把刚走出湘江阴影的红军再次打残。"},{text:"分兵两路，一部阻击一部强行北渡长江",correct:false,result:"错误！长江渡口已被敌军严密封锁，分兵只会两部俱损。"},{text:"固守土城工事，消耗敌军锐气后再突围",correct:false,result:"错误！红军缺粮少弹，阵地消耗战正中川军下怀，固守等于被包饺子。"}],history:"1935年1月28日土城战斗打响，因情报失误低估了川军郭勋祺部的兵力与战斗力，战斗陷入胶着，朱德总司令亲赴前线指挥。毛泽东当机立断：撤出战斗！1月29日红军一渡赤水，进入川南。土城之战虽未获胜，但红军'打得赢就打，打不赢就走'，从此掌握了战场主动权。毛泽东后来坦言土城是他军事生涯中的败仗之一——但正是这一'败'，走出了四渡赤水的千古绝唱。"},
+{icon:"🎭",title:"四渡赤水 · 兵临贵阳",desc:"红军三渡赤水做出北渡长江姿态，蒋介石调集重兵向川南扑来，贵阳方向顿时空虚——蒋介石本人正在贵阳督战，身边只有一个团！此时红军主力突然掉头——",img:'images/h3.jpg',options:[{text:"南渡乌江直逼贵阳，迫使蒋介石急调滇军来援，趁云南空虚西进",correct:true,result:"正确！'将军，抽车！'红军兵临贵阳逼昆明，蒋介石急调滇军，云南大门洞开，红军乘虚直入。"},{text:"将计就计强攻贵阳，活捉蒋介石",correct:false,result:"错误！贵阳城防工事坚固，攻坚耗时，敌军主力回援后红军将被围于坚城之下——佯攻的真谛在于'调'而不在于'打'。"},{text:"趁敌军注意力在川南，第四次北渡长江",correct:false,result:"错误！长江各渡口已被川军、中央军重兵封锁，北渡正是敌军重兵等待的方向。"},{text:"就地隐蔽于赤水河两岸山区，让敌军扑空",correct:false,result:"错误！山区贫瘠无法补给数万大军，敌军稳扎稳打逐步压缩，红军会被困死。"}],history:"1935年1月至4月，毛泽东指挥红军四渡赤水：一渡避敌，二渡回师黔北（娄山关大捷、再占遵义，取得长征以来最大胜利），三渡佯动川南，四渡后南渡乌江、兵临贵阳。正在贵阳的蒋介石吓出一身冷汗，急调滇军'保驾'，红军却虚晃一枪西进云南。四渡赤水以3万疲惫之师戏耍40万敌军，被毛泽东自称为平生'得意之笔'，成为世界军事史上运动战的经典范例。"},
+{icon:"🚣",title:"巧渡金沙江 · 1935年5月",desc:"红军兵临金沙江皎平渡。江水湍急，对岸有川军驻守，全军翻遍江岸只找到几条小船。数万大军靠小船过江需要数昼夜，敌军追兵距此只有几天路程——",img:'images/h4.jpg',options:[{text:"先遣队化装奇袭夺占渡口，控制两岸，征集船工昼夜抢渡",correct:true,result:"正确！红军化装成敌军夺取皎平渡，靠7条小船、几十名船工，6昼夜将全军摆渡过江，未损一人一枪。"},{text:"沿江多点同时泅渡，加快过江速度",correct:false,result:"错误！金沙江水急浪高、暗流密布，泅渡等于送死，且会惊动对岸守军。"},{text:"赶制竹筏木排，扩大渡江运力",correct:false,result:"错误！临时赶制筏排耗时且易被急流打散，时间上来不及。"},{text:"留一部断后死守渡口，主力边打边渡",correct:false,result:"错误！把精力用在防守上只会拖慢渡江，奇袭夺占才能赢得完整的渡江窗口。"}],history:"1935年5月3日至9日，中央红军在云南皎平渡巧渡金沙江。刘伯承率干部团化装奇袭，不费一枪一弹夺取渡口，随后靠7条木船、37名船工（当地汉族、彝族船工轮班摆渡），昼夜不停6天6夜，全军2万余人安全过江。等敌军追兵赶到江边，只捡到红军丢下的一只破草鞋。巧渡金沙江使红军彻底跳出了数十万敌军的围追堵截，取得了战略转移中具有决定意义的胜利。"},
+{icon:"⏳",title:"安顺场的困境 · 1935年5月",desc:"红军先头部队十七勇士强渡大渡河成功，夺下安顺场渡口。但坏消息接踵而至：全军只缴获一条小船，一次只能载十几人，几万人渡完需要一个月！而敌军薛岳部正日夜兼程赶来——",img:'images/h5.jpg',options:[{text:"以渡口部队为掩护，主力火速沿河奔袭上游泸定桥",correct:true,result:"正确！军委当即决定：已渡河部队与未渡河主力夹江而上，直取320里外的泸定桥——飞夺泸定桥由此而来。"},{text:"全军就地在安顺场排队抢渡，能过一个是一个",correct:false,result:"错误！一条船渡几万人需一个月，追兵几天就到，这是石达开当年覆灭的剧本。"},{text:"沿江搜索更多船只，扩大渡江规模",correct:false,result:"错误！敌军早已把沿岸船只收缴一空，安顺场这条船还是敌军留下自用的，再找船只是幻想。"},{text:"放弃渡河，掉头转入西康山区打游击",correct:false,result:"错误！川西高原人烟稀少、补给断绝，大部队进去就是绝境。"}],history:"1935年5月25日，红一团17名勇士在连长熊尚林带领下乘唯一的小船强渡大渡河成功。但船只有一条，全军渡河需时一个月。毛泽东、朱德当机立断：兵分两路夹河北上，夺取泸定桥。红四团一昼夜奔袭240里，5月29日飞夺泸定桥成功。72年前，石达开正是在安顺场因错失渡河时机而全军覆没——红军用决断改写了历史。蒋介石哀叹：'大渡河天险，竟不能阻赤匪！'"},
+{icon:"🗺️",title:"松潘还是草地 · 1935年8月",desc:"毛儿盖会议后，红军计划北上松潘大道。但胡宗南重兵已抢占松潘，强攻无把握。眼前只剩一条路：穿越无人区松潘大草地。而右路军中的红四方面军领导人张国焘已露出分裂苗头——",img:'images/h6.jpg',options:[{text:"趁敌军想不到红军敢走草地，迅速穿越，出敌不意北上",correct:true,result:"正确！胡宗南断言红军'不敢走草地'，红军偏走死地求生，出草地后打了包座战役，打开了北上通道。"},{text:"集中兵力强攻松潘，打通大路",correct:false,result:"错误！松潘有敌军精锐筑垒固守，红军攻坚装备不足，强攻胜算渺茫。"},{text:"全军西进青海，绕开松潘与草地",correct:false,result:"错误！青海高原千里无人烟，大部队西进等于走进另一个更大的'草地'。"},{text:"留在川康边建立根据地，暂不北上",correct:false,result:"错误！这正是张国焘的主张——川康边地瘠民贫、敌情复杂，无法支撑数万红军长期生存。"}],history:"1935年8月，因松潘战役计划无法实施，红军毅然改道穿越松潘草地。8月21日右路军进入草地，历经六七天死亡行军走出绝境，随即取得包座战役胜利，打开了向甘南进军的门户。胡宗南后来在回忆录中承认：'我判断红军绝不敢走草地……判断完全错误。'然而过草地后，张国焘拒不执行北上方针，党中央被迫率红一、三军团单独北上——长征最惊险的内部危机就此上演。"},
+{icon:"🌙",title:"巴西惊魂夜 · 1935年9月",desc:"张国焘密电右路军南下，'彻底开展党内斗争'——密电被叶剑英截获，火速报告毛泽东。此刻党中央驻地巴西附近就有红四方面军的部队，稍有不慎就是自相残杀——",img:'images/h7.jpg',options:[{text:"连夜率红一、三军团秘密北上，脱离险境，避免红军打红军",correct:true,result:"正确！党中央当机立断连夜北上。红四方面军有人请示是否拦截，徐向前一句'哪有红军打红军的道理'避免了一场浩劫。"},{text:"召集两军干部当面对质，揭露分裂阴谋",correct:false,result:"错误！在对方兵力占优的区域摊牌，等于把党中央置于枪口之下。"},{text:"按兵不动静观其变，争取时间说服张国焘",correct:false,result:"错误！密电已下，对方随时可能动手，'静观'就是坐以待毙。"},{text:"先下手为强，缴了附近四方面军部队的械",correct:false,result:"错误！自相开火正中分裂者下怀，红军内战的罪责谁也担不起。"}],history:"1935年9月9日，张国焘密电陈昌浩率右路军南下，企图危害党中央。叶剑英识断电报玄机，星夜报告毛泽东。当晚党中央召开巴西会议，决定率红一、三军团连夜秘密北上。9月10日凌晨部队开拔，红四方面军副参谋长李特率骑兵追来质问，徐向前严令'哪有红军打红军的道理'。毛泽东后来说这是他'一生中最黑暗的时刻'。1935年9月12日俄界会议，部队改编为陕甘支队继续北上。"},
+{icon:"📰",title:"哈达铺的报纸 · 1935年9月",desc:"红军攻占甘肃哈达铺，缴获了一批国民党的报纸。此时中央还没确定长征的最终落脚点。翻阅报纸，一条消息让毛泽东眼前一亮：陕北还有一块苏区和刘志丹的红军！",img:'images/h8.jpg',options:[{text:"拍板：到陕北去，与刘志丹的红军会合",correct:true,result:"正确！几张报纸定乾坤。中央在哈达铺正式决定把长征落脚点放在陕北，榜罗镇会议最终确认。"},{text:"继续北上中蒙边境，靠近苏联求援",correct:false,result:"错误！中蒙边境千里荒漠，且会陷入马家军骑兵的包围，此路不通。"},{text:"留在甘南汉回杂居区建立根据地",correct:false,result:"错误！甘南敌情复杂、回旋余地小，无法作为数路红军的总落脚点。"},{text:"南下川陕边，策应留在那里的红四方面军",correct:false,result:"错误！回头南下等于重新钻进敌军重兵围堵圈，前功尽弃。"}],history:"1935年9月，红军攻克哈达铺。侦察连长梁兴初缴获的《大公报》等报纸披露：陕北有刘志丹领导的红二十六军和相当规模的苏区。毛泽东据此提出'到陕北去'。9月27日榜罗镇会议正式决定以陕北苏区作为领导中国革命的大本营。哈达铺因此被称为'长征加油站'——不仅因物资补给，更因这几张报纸为万里长征指明了最终方向。红军长征的胜利落脚点，竟是从敌人的报纸上读出来的。"},
+{icon:"🏔️",title:"直罗镇奠基礼 · 1935年11月",desc:"初到陕北，敌军五个师分路扑来，扬言要把红军'剿灭在立足未稳之际'。陕甘支队与红十五军团刚会师，装备差、弹药少，但这一仗关乎能否在陕北站稳脚跟——",img:'images/h9.jpg',options:[{text:"诱敌深入直罗镇，集中两军团合力打一个歼灭战",correct:true,result:"正确！红军把敌军第109师放进直罗镇'口袋'全歼，毛泽东称此役'给党中央把全国革命大本营放在西北的任务，举行了一个奠基礼'。"},{text:"避敌锋芒，向北转移保存实力",correct:false,result:"错误！初到陕北就退，群众基础未立，一退再退将无立锥之地。"},{text:"分兵把守各要道关口，处处设防",correct:false,result:"错误！分兵防御是兵家大忌，兵力本处劣势的红军会被各个击破。"},{text:"趁夜奇袭敌军指挥部，斩首取胜",correct:false,result:"错误！敌军几个师纵深配置，奇袭指挥部一旦扑空，突击部队有去无回。"}],history:"1935年11月20日至24日，红一方面军在陕西鄜县（今富县）直罗镇全歼东北军第109师，毙俘敌师长牛元峰以下5300余人，缴获枪支3500余支。此战粉碎了国民党军对陕甘苏区的第三次'围剿'。毛泽东评价：'直罗镇一仗，给党中央把全国革命大本营放在西北的任务，举行了一个奠基礼。'此战也震撼了东北军，为次年'停止内战、一致抗日'的统一战线工作和西安事变埋下了伏笔。"},
+{icon:"🤝",title:"会宁会师 · 1936年10月",desc:"红一、红四方面军在会宁会师在即，红二方面军也突破重围北上。但敌胡宗南部正疯狂扑向会宁，企图在红军会师前各个击破。此时最关键的是——",img:'images/h10.jpg',options:[{text:"红一方面军主动南下接应，掩护二、四方面军会师",correct:true,result:"正确！红一方面军部队南下迎接，10月9日会宁会师、22日将台堡会师，三大主力终于团圆。"},{text:"各路红军就地隐蔽，等敌军扫荡过后再会合",correct:false,result:"错误！战机稍纵即逝，迟疑会让敌军把三大主力分割包围。"},{text:"先打一场大仗歼灭胡宗南主力，再安心会师",correct:false,result:"错误！会师前的首要任务是汇聚力量，主动寻求决战反而可能误期误事。"}],history:"1936年10月9日，红一、红四方面军在甘肃会宁会师；10月22日，红二方面军在将台堡与红一方面军会师。三大主力红军历时两年、转战十四个省，终于汇聚于西北。朱德在会师时热泪盈眶：'我们又在一起了！'会宁会师宣告了国民党军队围追堵截的彻底破产，标志着万里长征的胜利结束。会师后的山城堡战役再挫胡宗南，为陕甘宁根据地的巩固和全民族抗战的开启奠定了基础。"},
+{icon:"🌉",title:"再占遵义 · 1935年2月",desc:"二渡赤水后，红军回师黔北。敌军主力远在川南，黔军守卫遵义兵力薄弱。但攻城需要时间，而敌军援兵正在赶来。打遵义，还是不打——",img:'images/h11.jpg',options:[{text:"速战速决攻城，在敌军援兵到达前拿下遵义",correct:true,result:"正确！红军以神速攻克遵义，取得长征以来最大的一次胜利，士气大振。"},{text:"绕过遵义继续东进，不攻城以免被粘住",correct:false,result:"错误！遵义是黔北重镇，攻克后可获补给休整，且能震慑敌军，放弃太可惜。"},{text:"围城打援，用遵义做诱饵歼灭援敌",correct:false,result:"错误！红军兵力有限，围城打援需要足够时间和兵力，敌军援兵从多个方向来，难以集中歼灭。"},{text:"在遵义城外构筑工事，与黔军对峙谈判",correct:false,result:"错误！黔军虽弱但据城而守，对峙只会让中央军和川军援兵陆续赶到，红军反被包围。"}],history:"1935年2月27日至28日，红军攻克遵义城。此役歼灭和击溃敌军两个师又八个团，俘敌约3000人，取得长征以来最大的一次胜利。遵义大捷证明遵义会议改组领导后的红军战斗力焕然一新。当捷报传到红军总部时，会议室里一片欢腾——这是湘江惨败以来，红军第一次痛快淋漓的大胜仗。"},
+{icon:"🌊",title:"北渡嘉陵江 · 1935年3月",desc:"红四方面军为策应中央红军，决定强渡嘉陵江。江面宽阔，对岸敌军筑有坚固工事，而红军只有临时搜集的木船和竹筏。渡江的时机转瞬即逝——",img:'images/h12.jpg',options:[{text:"选择江面较窄处，趁夜色分批强渡，多点开花",correct:true,result:"正确！红军在苍溪、阆中等多处同时强渡，敌军顾此失彼，嘉陵江防线被一举突破。"},{text:"集中所有船只于一点，全力突破后再接应后续",correct:false,result:"错误！集中一点渡江，敌军火力也集中，第一批突击队伤亡会极大，且一旦被击退全军无船可用。"},{text:"先派小股部队佯渡吸引火力，主力另选他处偷渡",correct:false,result:"错误！佯渡部队九死一生，且偷渡他处如果被发现，两线都陷入被动，风险太大。"},{text:"等待上游降雨江水上涨，利用洪水浮渡",correct:false,result:"错误！江水暴涨只会让渡江更加危险，且时间不可控，中央红军已西进，策应刻不容缓。"}],history:"1935年3月28日至4月21日，红四方面军发起嘉陵江战役。徐向前总指挥亲临前线，红军在苍溪塔子山等地强渡成功，一举突破川军嘉陵江防线，歼敌万余人，攻占阆中、剑阁等八座县城。此役是红四方面军战史上规模最大的渡江作战，有力地策应了中央红军在云贵川边的机动作战。"},
+{icon:"🏔️",title:"翻越大雪山 · 1935年6月",desc:"中央红军要翻越海拔四千多米的雪山与红四方面军会师。战士们身着单衣，不少人脚上还是草鞋。山顶空气稀薄，有人已经开始头晕呕吐。向导说：在山顶停留超过一刻钟，人就回不来了——",img:'images/h13.jpg',options:[{text:"不许停留，互相搀扶快速通过，掉队者由专人负责",correct:true,result:"正确！红军以惊人的速度翻越雪山，互相搀扶着走过死亡地带，终于与友军会师。"},{text:"让体力好的战士先走，体弱者在山下休整",correct:false,result:"错误！雪山下同样严寒且缺粮，留下的人没有补给也会冻饿而死，必须全速通过。"},{text:"用酒和辣椒给每人御寒，原地休息恢复体力",correct:false,result:"错误！酒在高原反而加速失温，停留等于死亡，向导的警告绝非危言耸听。"},{text:"等午后气温升高再翻山顶，减少冻伤风险",correct:false,result:"错误！午后山区多风雪，且敌追兵将至，必须趁上午天气相对稳定时通过。"}],history:"1935年6月，中央红军翻越夹金山、梦笔山等多座大雪山。雪山上空气稀薄、终年积雪、气候变化无常。许多战士因为高原反应和严寒倒下，再也没有起来。但红军将士以钢铁般的意志征服了这些'连鸟儿都飞不过'的高山。翻过雪山后，中央红军与红四方面军在懋功地区胜利会师，两军将士相拥而泣。"},
+{icon:"🌾",title:"包座战役 · 1935年8月",desc:"红军刚走出草地，人困马乏，急需休整。但敌胡宗南部一个师已抢占包座，堵住了北上甘南的唯一通道。不打下包座，全军将被逼回草地——",img:'images/h14.jpg',options:[{text:"不顾疲劳立即进攻，趁敌军立足未稳夺回包座",correct:true,result:"正确！红军以顽强意志发起进攻，激战两天两夜攻克包座，打开了北上通道。"},{text:"部队实在太疲惫，先休整一天再进攻",correct:false,result:"错误！敌军正在加固工事，每拖延一小时就多一分难度，且敌军援兵将至。"},{text:"绕过包座走山间小路北上",correct:false,result:"错误！包座是咽喉要道，山间小路无法通行大部队，且随时可能被包座守敌截击。"},{text:"派使者与敌军谈判，争取和平通过",correct:false,result:"错误！胡宗南奉蒋介石严令堵截红军，谈判没有基础，拖延只会丧失战机。"}],history:"1935年8月29日至31日，红四方面军第三十军发起包座战役。此时红军刚走出草地，极度疲惫，但面对堵截之敌，徐向前总指挥下令立即进攻。经过两天两夜的激战，红军攻克上、下包座，歼敌四千余人，缴获大批物资。包座战役的胜利，为红军北上打开了通道，是红军走出草地后的第一个大胜仗。"},
+{icon:"⚔️",title:"山城堡战役 · 1936年11月",desc:"三大主力会师后，敌军胡宗南部孤军冒进追至山城堡。这是红军会师后的第一仗，打胜了就能巩固陕北根据地，打输了则前功尽弃——",img:'images/h15.jpg',options:[{text:"利用山城堡有利地形设伏，集中优势兵力打歼灭战",correct:true,result:"正确！红军三军协同，在山城堡山谷中伏击敌军，歼敌一个旅又一个团，取得大胜。"},{text:"分兵三路迎击，把敌军赶出陕甘宁边区",correct:false,result:"错误！分兵迎击无法形成局部优势，且敌军装备精良，正面对抗红军吃亏。"},{text:"主动后撤诱敌深入，待其疲惫后再反击",correct:false,result:"错误！敌军已深入根据地，再退会丧失群众信任，且陕北回旋余地有限。"},{text:"固守山城堡工事，与敌军打消耗战",correct:false,result:"错误！红军弹药粮食有限，消耗战打不起，必须以快打快歼速决。"}],history:"1936年11月21日，红军在山城堡地区伏击胡宗南部。此役红军三个方面军协同作战，歼敌一个旅又一个团，是红军长征胜利结束后的第一个大胜仗。山城堡战役的胜利，巩固了陕甘宁根据地，也推动了西安事变的爆发。此战后不久，1936年12月12日，西安事变爆发，国共两党走向合作抗日，中国革命翻开了新的一页。"},
+{icon:"🧭",title:"黎平定策 · 1934年12月",desc:"通道会议只是临时改变行军方向，没有解决'红军到底往哪去'的根本问题。占领黎平后，博古仍坚持回头去湘西。黎平会议上必须作出正式抉择——",options:[{text:"正式决定放弃湘西计划，向川黔边发展，建立新根据地",correct:true,result:"正确！黎平会议以政治局决定的形式确认转兵，被称为'黎明前的决策'。"},{text:"采纳博古意见，休整后仍北上湘西",correct:false,result:"错误！湘西口袋阵还在等着，回头就是自投罗网。"},{text:"不做正式决定，走到哪里算哪里",correct:false,result:"错误！没有方向的大军只会在流动作战中被消耗。"},{text:"立即在黎平建立根据地不再转移",correct:false,result:"错误！黎平地瘠民贫、敌军环伺，无法长期立足。"}],history:"1934年12月18日，中共中央政治局在贵州黎平召开会议，通过《中央政治局关于战略方针之决定》，正式放弃与红二、六军团会合的原定计划，改向川黔边进军。黎平会议把通道会议的临机决断变成了组织决定，部队还在会上进行了整编（撤销八军团并入五军团），为遵义会议作了重要准备。"},
+{icon:"🐔",title:"鸡鸣三省交权 · 1935年2月",desc:"遵义会议后行军到川滇黔交界'鸡鸣三省'村，博古仍掌握中央最高权力——挑着中央印章和文件的担子在谁那里，谁就是负责人。军事指挥屡屡掣肘，组织调整势在必行——",options:[{text:"由张闻天接替博古负总责，毛泽东参与军事指挥",correct:true,result:"正确！权力平稳交接，毛泽东专注军事，保证了遵义会议决策落地。"},{text:"让博古继续负责，只换军事顾问",correct:false,result:"错误！错误路线的组织根子不除，军事指挥仍无法统一。"},{text:"由毛泽东直接担任总负责人",correct:false,result:"错误！当时为团结多数同志，由张闻天负总责更稳妥。"},{text:"实行集体领导不设负责人",correct:false,result:"错误！紧急军情需要明确的领导核心，无人负责等于无人拍板。"}],history:"1935年2月5日前后，在云贵川三省交界、'一鸡长鸣，三省皆闻'的小村子，中央常委分工：博古交出权力，张闻天（洛甫）接替党中央负总责，毛泽东作为周恩来在军事指挥上的帮助者。周恩来后来回忆：'博古同志那天没有闹情绪，交了挑子。'这次平稳交接，是中国共产党成熟的体现。"},
+{icon:"🏮",title:"苟坝深夜的马灯 · 1935年3月",desc:"苟坝会议上多数人同意进攻打鼓新场，只有毛泽东一人反对——他判断滇军正在设伏。表决甚至撤销了他的前敌司令部政委职务。深夜，他做出最后努力——",options:[{text:"提马灯走夜路找周恩来，要求暂缓下发进攻命令",correct:true,result:"正确！真理有时在少数人手里。深夜的马灯，为红军避开了一个覆灭的陷阱。"},{text:"少数服从多数，随军进攻",correct:false,result:"错误！那会把红军送进口袋，坚持真理比顾全个人面子更重要。"},{text:"辞职离开指挥层",correct:false,result:"错误！赌气撂挑子是对革命不负责。"},{text:"越级直接给各团发电停止行动",correct:false,result:"错误！违反指挥纪律，会造成军令系统混乱。"}],history:"1935年3月10日深夜，毛泽东提着马灯走了几里田埂小路找到周恩来，说服他暂缓下达进攻打鼓新场的命令。次日情报证实敌军确有重兵设伏，会议重新采纳毛泽东意见，红军避免了一次灭顶之灾。会后中央成立毛泽东、周恩来、王稼祥三人军事小组，统一指挥红军。苟坝的那盏马灯，成为坚持真理、敢于担当的象征。"},
+{icon:"🗺️",title:"会理风波 · 1935年5月",desc:"四渡赤水后日夜急行军，林彪抱怨毛泽东'尽走弓背路'，写信要求更换前敌指挥。会理会议上，面对前线将领的不满情绪——",options:[{text:"会议统一思想，批评错误意见，维护新的军事领导",correct:true,result:"正确！统一思想、维护权威，紧接着红军就迎来了强渡大渡河的胜利。"},{text:"顺应前线意见更换前敌指挥",correct:false,result:"错误！临阵否定机动作战方针，四渡赤水的成果将付诸东流。"},{text:"严厉处分林彪、彭德怀",correct:false,result:"错误！重在分清是非、统一思想，高压处分会激化内部矛盾。"},{text:"不予理会，用以后的胜利说话",correct:false,result:"错误！指挥分歧不解决，下一步大渡河行动无法令行禁止。"}],history:"1935年5月12日，中共中央在四川会理城郊召开政治局扩大会议，批评了林彪等人要求更换军事指挥的错误意见，周恩来、朱德等发言支持毛泽东，维护了遵义会议后确立的军事领导。会理会议后，全军思想统一、士气重振，随即抢渡金沙江、强渡大渡河、飞夺泸定桥，连战连捷。"},
+{icon:"🤝",title:"两河口定方向 · 1935年6月",desc:"懋功会师后，张国焘主张西进川康或南下'到成都吃大米'，中央主张北上建立川陕甘根据地、背靠抗日前线。两种方向决定红军命运。两河口会议上——",options:[{text:"确定北上建立川陕甘根据地的统一战略方针",correct:true,result:"正确！北上方针把长征落脚点与抗日出发点连在了一起。"},{text:"采纳张国焘主张南下攻取成都平原",correct:false,result:"错误！川军重兵把守，后来百丈关失利证明南下是绝路。"},{text:"两军分头发展，各选方向",correct:false,result:"错误！分兵只会被敌军各个击破。"},{text:"就地停留观局再定",correct:false,result:"错误！雪山脚下无粮无后方，停留就是坐困。"}],history:"1935年6月26日，两河口会议确定'集中主力向北进攻，首先取得甘肃南部，以创建川陕甘苏区根据地'的战略方针。张国焘在会上举手同意，会后却按兵不动、拖延北上。团结与分裂的较量自此表面化，但北上方针始终为党中央所坚持。"},
+{icon:"🌊",title:"芦花沙窝求团结 · 1935年7-8月",desc:"张国焘自恃兵多向中央要权，两军关系微妙。一些同志主张公开斗争。毛泽东、张闻天等权衡后选择——",options:[{text:"组织上作必要让步争取团结，北上方针绝不让步",correct:true,result:"正确！让职务不让方向——既争取红四方面军广大将士，又守住原则底线。"},{text:"寸权不让，立即摊牌",correct:false,result:"错误！一旦翻脸，数万红军可能内战，亲痛仇快。"},{text:"全面满足张国焘的职务要求",correct:false,result:"错误！无原则让步只会助长分裂野心。"},{text:"率中央红军单独北上",correct:false,result:"错误！时机不成熟，单独行动等于主动分裂。"}],history:"1935年7月芦花会议、8月沙窝会议上，中央为团结张国焘，让他担任红军总政委等重要职务，但在'北上还是南下'的根本战略方针上绝不让步。这种'组织上可以让步、原则上绝不动摇'的策略，最大限度争取了红四方面军广大干部战士。"},
+{icon:"📋",title:"俄界缩编 · 1935年9月",desc:"巴西之夜后，党中央率红一、三军团单独北上，只剩约八千人，前有堵截后有追兵。俄界会议上必须决定这支孤军的命运——",options:[{text:"缩编为陕甘支队，精简机关充实连队，继续北上",correct:true,result:"正确！八千精兵攥成拳头轻装北上，几天后就拿下了腊子口。"},{text:"恢复分散游击，各谋出路",correct:false,result:"错误！分散即覆灭，越是困难越要保持建制。"},{text:"南下追回红四方面军",correct:false,result:"错误！回头等于重入分裂险境和敌军重围。"},{text:"就地在甘南建立根据地",correct:false,result:"错误！敌情我情都不允许，必须先找到可靠的落脚点。"}],history:"1935年9月12日，中共中央在甘肃俄界召开政治局扩大会议，将北上的红一、三军团和军委纵队缩编为中国工农红军陕甘支队，彭德怀任司令员、毛泽东任政治委员。会议还作出了《关于张国焘同志的错误的决定》。八千精兵轻装疾进，几天后攻克天险腊子口，到达哈达铺。"},
+{icon:"📰",title:"榜罗镇定归宿 · 1935年9月",desc:"哈达铺读报后知道了陕北苏区，但'到哪里落脚'仍需正式决策。进驻通渭榜罗镇后，中央召开政治局会议给出最终答案——",options:[{text:"正式确定把长征落脚点放在陕北苏区",correct:true,result:"正确！历时一年、九易落脚设想的中央红军，终于有了确定的家。"},{text:"继续向宁夏、外蒙方向发展靠近苏联",correct:false,result:"错误！荒漠千里且有马家军骑兵，此路不通。"},{text:"在陇东建立新区再观望",correct:false,result:"错误！敌军合围在即，没有观望的时间。"},{text:"东渡黄河进入山西",correct:false,result:"错误！那是1936年东征的任务，此刻力量不足。"}],history:"1935年9月27日，中共中央政治局在甘肃通渭榜罗镇召开会议，正式决定率陕甘支队迅速北上，同红二十五军和陕北红军会合，'在陕北保卫和扩大苏区'。随后部队翻越六盘山，于10月19日到达吴起镇。从瑞金到吴起，二万五千里的终点，由一次政治局会议一锤定音。"},
+{icon:"⚔️",title:"东征出征 · 1936年2月",desc:"落脚陕北后地贫民穷，日军侵华步步紧逼。如何打破封锁、筹款扩红、把抗日旗帜打出去？毛泽东提出一个大胆方案——",options:[{text:"东渡黄河发起东征，打到山西抗日前线去",correct:true,result:"正确！东征筹款、扩红、播撒抗日火种，把落脚点变成了出发点。"},{text:"死守陕北巩固根据地",correct:false,result:"错误！困守瘠薄之地，经济上无法长期支撑数万大军。"},{text:"再次南下打回富庶的四川",correct:false,result:"错误：旧路不可重走，且偏离抗日方向。"},{text:"全军立即西征打通苏联通道",correct:false,result:"错误！西征是后来的另一步棋，当下更需以抗日旗帜扩大政治影响。"}],history:"1936年2月20日至5月5日，红军东渡黄河发起东征战役，在山西历时75天，歼敌约7个团，筹款30余万银元，扩红8000余人，推动了华北抗日救亡运动高潮。毛泽东在东征途中写下《沁园春·雪》：'数风流人物，还看今朝。'东征是红军把'长征落脚点'变成'抗日出发点'的关键一着。"},
+{icon:"🌉",title:"西征接应 · 1936年夏秋",desc:"红二、四方面军正在北上，蒋介石严令胡宗南拦截。中央红军该做什么，才能确保三大主力会师不被各个击破——",options:[{text:"发起西征战役，扩大苏区并南下接应二、四方面军",correct:true,result:"正确！一边扩大根据地，一边主动南下接应，为大会师创造了直接条件。"},{text:"固守陕北等友军自己找来",correct:false,result:"错误！消极等待，敌军正可从容分割围堵。"},{text:"全军东渡黄河再打山西",correct:false,result:"错误！兵力分散到错误方向，接应无从谈起。"},{text:"主力隐蔽保存实力",correct:false,result:"错误！友军苦战北上，接应是大局所需。"}],history:"1936年5月至7月，红一方面军发起西征战役，解放陕甘宁边大片地区，使苏区扩大为陕甘宁根据地；随后部队南下，积极接应红二、四方面军北上。10月，三大主力终于在会宁、将台堡胜利会师。"}
+];
+
+/* ============ 地狱模式题库（25题，情景抉择，无数字史实） ============ */
+const HELL_QUESTIONS=[
+{icon:"🌊",title:"沼泽救援",desc:"你的一名战友陷入草地沼泽，泥浆已经淹到胸口。他越是挣扎陷得越快。旁边还有几名战士想要冲上去拉人。你是现场指挥员——",img:'images/x1.jpg',options:[{text:"让战士趴在草甸上，手拉手形成人链去拉",correct:true,result:"正确！草地沼泽救援必须增大受力面积，人链趴在草甸上是唯一安全的救援方式。"},{text:"扔绳索或绑腿带让战友抓住，众人一起拉",correct:false,result:"错误！绳索拉力会让陷落者身体倾斜，反而加速下沉，且草甸承受不了集中的拉力。"},{text:"指挥众人从四面同时接近，一起把他抬出来",correct:false,result:"错误！四面同时踩踏只会让周围草甸大面积塌陷，救援者和被救者一起陷入沼泽。"},{text:"让他平躺扩大浮力，等泥浆稳定后再想办法",correct:false,result:"错误！在稀泥沼泽中平躺并不能有效浮起，时间就是生命，必须主动救援。"}],history:"松潘草地遍布沼泽泥潭，许多红军战士陷入后牺牲。当时的救援经验是：绝不能单人站立施救，必须多人趴在草甸上形成人链，利用大面积分散压力。有的战士陷到胸口，还把手中的枪举过头顶递给战友，说：'把它交给党。'这种在绝境中依然保持组织纪律和互相救助的精神，是红军能走出草地的重要原因。"},
+{icon:"🔥",title:"夜火判断",desc:"深夜行军，队伍疲惫不堪。前方山坳里突然出现几处火光，隐约有人影晃动。是友军？是当地百姓？还是敌军的埋伏？派出的侦察兵还没回来——",img:'images/x2.jpg',options:[{text:"全队静默隐蔽，派最精干的小组抵近侦察",correct:true,result:"正确！在敌情不明时，隐蔽和抵近侦察是唯一正确的选择。贸然行动可能暴露自己，也可能错失与友军会合的机会。"},{text:"火光稀疏，应该是百姓，派人前去联络求助",correct:false,result:"错误！敌军常用火光诱敌，贸然接近可能中埋伏。长征途中多次遭遇敌军伪装成百姓的诱捕。"},{text:"全队改道绕行，不管前方是什么都不冒险",correct:false,result:"错误！盲目绕行可能偏离预定路线，在陌生山区迷路比遭遇战更危险。"},{text:"朝火光方向鸣枪示警，逼对方表明身份",correct:false,result:"错误！鸣枪会暴露自己位置，如果对方是敌军大部队，等于自投罗网；如果是友军，也会造成误伤。"}],history:"长征途中，红军经常需要在夜间行军和作战。敌我识别是一个生死攸关的问题。1935年红军在川南曾误把敌军火把当成友军，遭受损失；也曾在贵州把百姓篝火当成敌军而绕道，错失了补给机会。红军后来形成了严格的夜间识别规则：接近不明火光必须先隐蔽侦察，确认身份前绝不暴露自己。"},
+{icon:"💧",title:"水源甄别",desc:"连续两天没有喝到干净水，战士们嘴唇干裂。前方发现一个水坑，水色发黄，有异味。有人说是毒水，有人说是矿物质沉积。战士们渴得眼睛发红——",img:'images/x3.jpg',options:[{text:"让党员先少量试饮，观察半小时无恙再分给大家",correct:true,result:"正确！'党员先试'是长征中的铁律，从草地毒草到可疑水源，党员永远站在危险的第一线。"},{text:"用布过滤煮沸后再喝，杀菌消毒",correct:false,result:"错误！草地行军中几乎没有煮水的条件和时间，且重金属毒素煮沸也无法去除。"},{text:"宁可渴着也不喝，继续寻找更干净的水源",correct:false,result:"错误！在高原脱水比中毒更快致命，且不一定能找到替代水源，必须先解决眼前的生存危机。"},{text:"让马先喝，马没事人再喝",correct:false,result:"错误！长征后期马匹极少，且马对某些毒素的耐受与人不同，这个办法不可靠。"}],history:"长征途中，饮水安全是生死大事。松潘草地的水多含毒质和矿物质，盲目饮用会导致腹泻、中毒甚至死亡。红军形成了'党员先试'的优良传统——不管是可疑的食物还是水源，党员和干部总是第一个尝试。许多党员因此中毒牺牲，但他们用身体为战友排除了危险。这种无私奉献的精神，是红军凝聚力所在。"},
+{icon:"🧊",title:"向导抉择",desc:"翻越雪山时，随行的藏族向导因高原反应严重掉队，倒在雪地里意识模糊。他已经无法自行行走，需要两人搀扶。但队伍正在冲顶，每多带一个人就意味着更大的风险——",img:'images/x4.jpg',options:[{text:"两人架着他走，轮流替换，绝不丢下帮助过我们的人",correct:true,result:"正确！红军有铁的纪律：绝不抛弃帮助过革命的群众。藏族向导为红军带路，就是革命的同志。"},{text:"留下一名战士和一点干粮照顾他，大部队先走",correct:false,result:"错误！雪山上留下两人等于让他们一起冻死，没有大部队的热量和庇护，两人都无法生还。"},{text:"用雪水把他泼醒，让他自己跟上队伍",correct:false,result:"错误！高原严重缺氧昏迷不是意志能克服的，泼雪水只会加速体温流失，是变相的放弃。"},{text:"给他披上所有能找到的衣物，托付给山下牧民",correct:false,result:"错误！雪山上没有牧民帐篷，且距离下山还有很远，把他留在雪地就是让他等死。"}],history:"长征途中，红军对待向导和群众始终如同亲人。藏族、彝族、苗族向导为红军带路，红军宁可自己挨饿也要分粮食给他们，宁可自己冻着也要把衣物让给他们。相反，敌军经常强迫百姓带路后杀人灭口。正是这种鲜明的对比，让各族人民从心底拥护红军。红军过雪山草地时，许多向导后来加入了红军队伍。"},
+{icon:"💉",title:"吗啡分配",desc:"战斗中缴获了一个敌军医药箱，里面只剩一支吗啡。而此刻连部有三名重伤员：一位是经验丰富的侦察班长，一位是年仅16岁的通讯员，还有一位是连队的机枪手。吗啡给谁——",img:'images/x5.jpg',options:[{text:"给伤势最重、最需要的战士，不问身份",correct:true,result:"正确！红军的原则是伤病员优先，不按职务和年龄排先后，只看医疗需要。"},{text:"给侦察班长，他的经验对全连生存最重要",correct:false,result:"错误！虽然侦察班长宝贵，但在医疗资源分配上按'价值'取舍，违背了红军官兵平等的原则。"},{text:"给机枪手，火力支柱不能倒",correct:false,result:"错误！把药物分配给'战斗骨干'而非最需要的伤员，是旧军队的做法，不是红军的作风。"},{text:"把吗啡稀释成三份，每人给一点减轻痛苦",correct:false,result:"错误！吗啡稀释后药效全无，等于谁都没救。医疗决策必须专业，不能搞平均主义。"}],history:"长征途中，药品比黄金还珍贵。红军缺乏麻醉药、消炎药和手术器械，许多伤员只能在无麻醉的情况下接受手术。但红军始终坚持'伤病员第一'的原则：首长的马匹让给伤员骑， scarce medicines优先给重伤员。这种官兵一致、上下平等的传统，让普通战士心甘情愿为革命赴汤蹈火——因为他们知道，自己不会被抛弃。"},
+{icon:"🤝",title:"彝区对峙",desc:"进入彝区后，队伍被数百名手持火枪和梭镖的彝民武装拦住。他们语言不通，神情警惕，身后是悬崖峭壁，退无可退。翻译战战兢兢地说，他们以为红军是来抢粮食的——",img:'images/x6.jpg',options:[{text:"命令部队后退一步表示善意，派懂彝语的向导上前喊话解释",correct:true,result:"正确！后退一步表示没有敌意，用当地语言沟通消除误解，是化解民族冲突的最佳方式。"},{text:"展示武器但不开火，用武力威慑让对方让路",correct:false,result:"错误！武力威慑会激化矛盾，彝民熟悉地形，一旦冲突爆发红军将陷入四面受敌的险境。"},{text:"拿出银元和盐巴放在地上，表示友好和交换",correct:false,result:"错误！在语言不通的情况下，突然'给东西'可能被误解为贿赂或挑衅，效果适得其反。"},{text:"派一个班绕到对方身后，形成前后夹击之势",correct:false,result:"错误！绕后行动会被视为准备进攻，直接导致冲突爆发，且地形复杂绕后困难极大。"}],history:"1935年红军通过大凉山彝区时，彝族果基家支对汉人军队充满戒备——此前川军和滇军多次劫掠彝民。红军采取了'后退一步、平等对话'的策略，刘伯承亲自与彝族首领小叶丹谈判，最终歃血为盟。这种尊重少数民族、平等相待的政策，与国民党军队的民族压迫形成鲜明对比，为红军顺利通过彝区创造了条件。"},
+{icon:"🌾",title:"征粮困境",desc:"断粮三天了，战士们只能吃草根和皮带。前方山谷里发现一个牧民帐篷，有炊烟升起。向导说那是藏族牧民的冬窝子，存有一些青稞和酥油。部队急需补给——",img:'images/x7.jpg',options:[{text:"派代表进去说明情况，花钱公平购买，不打白条",correct:true,result:"正确！红军有'三大纪律八项注意'，买东西付钱是铁律，即使在绝境中也不能侵犯群众利益。"},{text:"部队实在太饿了，先拿来应急，以后革命胜利再补偿",correct:false,result:"错误！'先拿后补'本质上就是抢，红军宁可饿着也不能违反纪律，这是与旧军队的根本区别。"},{text:"只买一半，给牧民留下足够的过冬粮食",correct:false,result:"错误！虽然出发点是好的，但在不知道牧民具体存粮的情况下，'留一半'可能留下太少也可能买不够，应该按市价公平交易。"},{text:"让牧民自愿捐献，不强迫但鼓励",correct:false,result:"错误！'鼓励捐献'在断粮的绝境中就是变相施压，红军的原则是公平买卖，不搞任何形式的摊派。"}],history:"长征途中，红军严格执行群众纪律。即使在极度缺粮的情况下，红军也坚持买东西付钱，不打白条不白拿。过藏区时，由于语言不通和藏民受敌军造谣影响而躲避，红军有时找不到人交易，就按市价把钱留在帐篷里，然后才取走粮食。这种秋毫无犯的纪律，让沿途各族群众看到了一支完全不同的军队。"},
+{icon:"⚓",title:"渡口取舍",desc:"大渡河畔，只找到两条小船，一次最多载20人。后方追兵距此不到两天路程。眼下需要过河的有：50名重伤员、100名战斗员、大批弹药和粮食。船只有限——",img:'images/x8.jpg',options:[{text:"战斗员和轻伤员先渡，控制对岸后马上返船接运伤员和物资",correct:true,result:"正确！先送战斗员控制对岸阵地，确保渡口安全，再返船接运伤员和物资，是最优顺序。"},{text:"先送伤员，他们是革命的功臣不能丢下",correct:false,result:"错误！先送伤员会占用宝贵的渡江时间，且对岸无部队掩护，伤员到了对岸也不安全。"},{text:"战斗员和物资先渡，伤员留下最后走",correct:false,result:"错误！虽然战斗员优先是对的，但把伤员留到最后风险太大，返船次数有限，必须兼顾。"},{text:"人货混装，每次尽量多装，加快渡江速度",correct:false,result:"错误！超载会导致翻船，一次翻船的损失比少运一次更大，必须保证每次安全渡江。"}],history:"长征中的渡江作战经常面临'船少人多'的困境。红军的原则是：先控制对岸阵地确保安全，再按轻重缓急有序渡江。1935年巧渡金沙江时，红军正是靠7条小船、6昼夜不间断摆渡，把全军安全送过天险。这种严密的组织和科学的调度，是红军能够在极端不利条件下完成战略转移的重要原因。"},
+{icon:"🏇",title:"追兵应对",desc:"侦察兵急报：敌军骑兵从侧翼抄近路，预计三小时后就能截断我军前进路线。前方是开阔河谷，无险可守；两侧是高山，翻山会严重拖慢行军速度。你是前卫部队指挥员——",img:'images/x9.jpg',options:[{text:"抢占河谷中有利地形构筑临时阵地，阻击敌军争取大部队通过时间",correct:true,result:"正确！以少量精锐阻击敌骑兵，为大部队赢得通过开阔地的时间，是长征中常用的战术。"},{text:"立即翻山绕行，避开敌军锋芒",correct:false,result:"错误！翻山会严重拖慢速度，且山高路险大部队难以快速通过，反而可能被敌军追上围困在山中。"},{text:"加速通过开阔河谷，在敌军到达前冲过去",correct:false,result:"错误！步兵在开阔地跑不过骑兵，且部队疲惫，'赛跑'没有胜算。"},{text:"就地隐蔽，等敌军骑兵通过后再继续前进",correct:false,result:"错误！数万大军在开阔河谷根本无法隐蔽，且敌军骑兵后面还有步兵主力，等他们通过等于被包围。"}],history:"长征途中，红军经常需要以少数兵力阻击优势敌军的追击，掩护主力转移。这些阻击战往往打得极为惨烈，阻击部队明知是九死一生，依然坚决执行任务。湘江战役中红五军团34师6000余人几乎全部牺牲；娄山关战斗中也有部队为掩护主力而浴血奋战。正是这种'为有牺牲多壮志'的精神，保证了红军主力的生存。"},
+{icon:"🗺️",title:"路线分歧",desc:"两路红军刚刚会师，士气高涨。但两军指挥官对下一步行军路线产生了严重分歧：一路主张立即北上建立根据地，一路认为应该就地休整补充后再决定方向。双方都有道理，争执不下——",img:'images/x10.jpg',options:[{text:"召开联席会议充分讨论，按民主集中制原则统一决策",correct:true,result:"正确！红军实行民主集中制，重大军事决策通过会议集体讨论决定，既充分发扬民主又保证统一指挥。"},{text:"支持资历老、兵力多的一方的意见",correct:false,result:"错误！长征中的路线决策不能按资历或兵力排大小，必须服从正确的军事判断和党中央的统一领导。"},{text:"各按各的方案行动，实践出真知",correct:false,result:"错误！分兵行动会削弱整体力量，容易被敌军各个击破，是长征中最危险的做法。"},{text:"请示上级或共产国际裁决，等待回复",correct:false,result:"错误！长征中常常与上级失去联系，战场形势瞬息万变，等待上级裁决可能错失战机。"}],history:"长征途中，红军多次面临路线抉择的争论。遵义会议、两河口会议、巴西会议等都是为了统一战略思想而召开的重要会议。其中，张国焘的分裂主义路线给红军造成了严重损失。历史证明，只有坚持民主集中制、服从党中央的统一领导，才能保证红军在极端困难的环境中保持团结和战斗力，最终走向胜利。"},
+{icon:"❄️",title:"雪崩危机",desc:"队伍正在翻越雪山，突然前方传来闷雷般的轰鸣——雪崩！巨大的雪浪从前方山坡倾泻而下，阻断了原定路线。队伍此刻正在山腰，上方是陡峭的雪坡，下方是深不见底的冰谷——",img:'images/x11.jpg',options:[{text:"立即横向转移到山脊背风面，避开雪崩冲击区",correct:true,result:"正确！雪崩沿山谷下泄，横向转移到山脊或稳固岩石区是最佳避险方式。"},{text:"快速后退，原路撤回山脚",correct:false,result:"错误！后退路线同样在山谷中，且雪崩速度远超人类奔跑速度，后退等于迎着雪浪跑。"},{text:"就地趴下抱紧地面，等雪崩过去",correct:false,result:"错误！在开阔山坡趴下仍会被雪浪卷走，且积雪掩埋后难以自救，必须主动转移。"},{text:"分散散开减少被埋面积，各自寻找遮蔽",correct:false,result:"错误！分散后失去组织联系，且单兵在雪崩面前毫无意义，必须统一指挥集体转移。"}],history:"长征中红军翻越了20余座海拔4000米以上的雪山。雪崩、暴风雪、缺氧是家常便饭。夹金山、梦笔山、昌德山……每一座雪山都留下了红军战士的遗体。但红军以惊人的组织纪律性，在极端恶劣的自然环境中保持了建制完整——统一指挥、互相救助、决不擅自行动，这是红军能活着走出雪山的根本保障。"},
+{icon:"🕵️",title:"叛徒处置",desc:"队伍里一名向导行为可疑：他总是'不小心'走错路，又总是能在敌军巡逻间隙'恰好'找到安全路线。有战士怀疑他是敌军奸细，但尚无确凿证据。如果他真是奸细，下一次就可能把队伍带进包围圈——",img:'images/x12.jpg',options:[{text:"秘密监视其行动，同时派另一组侦察兵独立核实路线",correct:true,result:"正确！在没有确凿证据前不能冤枉好人，但也不能掉以轻心，必须双轨验证确保安全。"},{text:"立即拘禁审查，宁可错抓不能错放",correct:false,result:"错误！'宁可错抓'会破坏群众对红军的信任，且如果被冤枉，会寒了所有帮助红军群众的心。"},{text:"不动声色继续用他带路，暗中调整行军方向试探",correct:false,result:"错误！继续让他带路风险太大，万一真是奸细，试探的代价可能是全队的生命。"},{text:"召开群众大会公开质询，让他接受大家评判",correct:false,result:"错误！公开质询会打草惊蛇，如果真有问题他会提前逃跑或传递情报；如果是冤枉，也会伤害其名誉。"}],history:"长征途中，红军确实遇到过叛徒和奸细，但处理极为谨慎。红军始终坚持'不冤枉一个好人'的原则，同时保持高度警惕。对于可疑人员，红军采取'边用边查、多路验证'的策略。相反，国民党军队经常不分青红皂白杀害疑似'通共'的百姓，结果把群众推向了红军。民心向背，往往就体现在这些细节之中。"},
+{icon:"📜",title:"情报真伪",desc:"刚打退一股敌军，在缴获的公文包里发现一份'机密命令'：敌军主力将于三日后撤出当前区域，转向别处。如果属实，红军可以获得宝贵的休整时间；如果是假情报，等待我军的可能是更凶险的包围——",img:'images/x13.jpg',options:[{text:"多方验证：审问俘虏、对照其他缴获文件、派出侦察兵核实",correct:true,result:"正确！单份文件不能作为决策依据，必须多源交叉验证，这是情报工作的基本准则。"},{text:"既然是从敌军指挥官公文包里搜出的，应该是真的，按此调整部署",correct:false,result:"错误！敌军指挥官可能故意留下假文件迷惑红军，这种'诱饵情报'在战争中屡见不鲜。"},{text:"不管真假，按原计划继续行军，不冒任何风险",correct:false,result:"错误！完全忽视情报会错失战机，如果敌军真的撤退，红军可以赢得宝贵的休整和补充时间。"},{text:"趁敌军'即将撤退'军心不稳，立即发起进攻",correct:false,result:"错误！如果情报是假的，发起进攻正好中了敌军'诱敌深入'的圈套，后果不堪设想。"}],history:"长征中，情报工作关乎生死。红军不仅依靠自己的侦察兵，还善于从敌人的报纸、公文、俘虏口中获取情报。巧渡金沙江、飞夺泸定桥等经典战例，都离不开准确及时的情报。但红军也遇到过假情报——土城之战就是因为低估了川军兵力而陷入被动。毛泽东后来总结：情报必须多源验证，不能轻信一面之词。"},
+{icon:"🔥",title:"严寒取暖",desc:"雪山上寒风刺骨，气温降到零下三十度。有战士提议生火取暖，但火光在雪地上会暴露位置，敌侦察机白天一直在这一带活动。战士们冻得牙齿打颤，有人已经出现冻伤——",img:'images/x14.jpg',options:[{text:"严格控制生火：只在背风洼地点小堆火，派专人瞭望，发现飞机立即熄灭",correct:true,result:"正确！绝对禁止生火不现实，但必须严格控制：小堆、背风、专人警戒、及时熄灭，把暴露风险降到最低。"},{text:"不能生火，用身体互相取暖，靠意志力挺过去",correct:false,result:"错误！严重冻伤会导致截肢甚至死亡，在极端严寒中完全禁止取暖是不人道的，也会削弱战斗力。"},{text:"白天不生火，等天黑后再大面积生火取暖做饭",correct:false,result:"错误！夜间生火同样会暴露红外特征，且大面积生火一旦引起雪崩或火灾更危险。"},{text:"找山洞或岩石缝隙避风，在里面生火",correct:false,result:"错误！雪山上很少有足够大的天然洞穴，且密闭空间生火会导致一氧化碳中毒，危险更大。"}],history:"长征翻越雪山时，严寒是致命的敌人。红军规定：严禁在开阔地带、白天、大风天生火，但在背风处、夜间、小范围内可以谨慎生火。这种'辩证'的纪律体现了红军实事求是的作风——既不是不顾风险的蛮干，也不是不顾士兵死活的教条。正是这种灵活的指挥艺术，让红军在极端环境中最大限度地保存了有生力量。"},
+{icon:"🍞",title:"最后的干粮",desc:"断粮已经四天了。指导员口袋里还有最后一份炒面，约莫够一个人吃一顿。前方是未知的草地，后方可能有追兵。几个战士已经饿得站不稳了。这份炒面——",img:'images/x15.jpg',options:[{text:"平均分给最虚弱的几个战士，每人一口续命",correct:true,result:"正确！在绝境中，'一人一口'比给一个人吃饱更能维持整体的战斗力，这是红军集体主义精神的体现。"},{text:"留给尖兵班，他们需要体力探路",correct:false,result:"错误！虽然尖兵重要，但在所有人都极度饥饿的情况下，把最后的食物给特定人群会引发不满和分裂。"},{text:"留给伤员，他们最需要营养恢复",correct:false,result:"错误！伤员确实需要照顾，但在断粮四天的绝境中，不给战斗员食物等于放弃全队的生存能力。"},{text:"指导员自己吃掉保存体力指挥全队",correct:false,result:"错误！红军干部与战士同甘共苦，指导员私吞最后的食物，会在瞬间摧毁全队的信任和士气。"}],history:"长征中的粮食危机贯穿始终。过草地时，许多战士把仅有的青稞面、炒面互相谦让。彭德怀把自己的马杀掉分给战士，贺龙钓鱼给大家充饥。周恩来在过草地时把仅有的半袋青稞面全部分给伤员，自己靠野菜充饥。正是这种'有盐同咸、无盐同淡'的官兵一致精神，让红军在最艰难的条件下保持了团结和战斗力。"},
+{icon:"🕵️",title:"路遇民团",desc:"先遣连化装成'中央军'行军，山坳里迎面撞上一队民团。对方点头哈腰向'国军长官'报告：前面镇子就驻着红军主力。是继续把戏演下去，还是另作处置——",options:[{text:"将计就计套出敌军布防情报，令其带路后寻机缴械",correct:true,result:"正确！沉住气、套情报、不主动开火，等达成战术目的再突然收口——化装奇袭里，演技就是战斗力。"},{text:"立即开火歼灭这股民团",correct:false,result:"错误！枪声会提前暴露我军位置，奇袭就变成了强攻。"},{text:"亮明红军身份争取他们起义",correct:false,result:"错误！民团成分复杂，政治争取没有时间基础，风险太大。"},{text:"绕道避开不与其接触",correct:false,result:"错误！对方已看清我军规模，放走等于给敌人送情报。"}],history:"长征中红军多次化装奇袭：干部团化装成中央军直取皎平渡，兵不血刃控制渡口和渡船；智取遵义、哈达铺侦察也靠化装成敌军官长。化装行动有严格纪律：不抢劫、不派款、不拉夫，奇袭得手后立即恢复红军身份——诈敌可以，欺民不行。"},
+{icon:"🎖️",title:"俘虏抉择",desc:"抓到几名敌军伤兵，其中一人是报务员，掌握敌军明天合围的详细部署。但我军行军极快，带着俘虏行动不便，也有人担心放走会泄密——",options:[{text:"优待伤兵、给饭治伤，先获取情报，再教育后分批释放",correct:true,result:"正确！优待俘虏既能拿到情报，又能瓦解敌军，后来东北军大量厌战就与此有关。"},{text:"全部处决防止走漏消息",correct:false,result:"错误！杀俘是红军铁律严禁的，也会断了敌军投诚之路。"},{text:"带着一起长征，直接编入连队",correct:false,result:"错误！未经审查的俘虏编入战斗序列有内卫风险，行动负担也太重。"},{text:"不管不问就地抛下",correct:false,result:"错误！伤兵被敌回收后情报照样泄露，也违背红军的人道立场。"}],history:"红军优待俘虏是瓦解敌军的利器：伤兵给治、愿走的发路费、愿留的欢迎。直罗镇战役后大批东北军俘虏受到优待，成为1936年西安事变前后东北军与红军秘密合作、共同要求抗日的桥梁。'士兵不打士兵、穷人不打穷人'的政策，让敌军越打越厌战。"},
+{icon:"📻",title:"夜半电波",desc:"电台侦听班截获一份不明来源的明码电报，内容像是敌军调动，又像是故意发出的诱饵，发报手法与已知敌军电台都不同。参谋长在等你的判断——",options:[{text:"情报存疑，多路核实，部队按原方案加强警戒",correct:true,result:"正确！单一来源的情报先存疑、再核实，同时不放松战备，这是情报工作的铁律。"},{text:"立即按电报内容调整部署",correct:false,result:"错误！无法验证的情报直接用于决策，等于把全军命运交给陌生人。"},{text:"断定是假情报置之不理",correct:false,result:"错误！万一是真的，就错失了规避合围的窗口。"},{text:"回电试探对方身份",correct:false,result:"错误！回电会暴露我台位置和侦听能力。"}],history:"长征中的情报战是'走出来'的生命线。红军二局多次破译敌军密电，毛泽东说：'没有二局，长征是很难走过来的。'但再出色的情报也要交叉验证——土城战斗就是误判川军兵力而陷入被动。此后红军形成'侦听、审讯、侦察'三源对证的铁律。"},
+{icon:"🪵",title:"断桥",desc:"前卫营赶到河边，木桥已被敌军烧毁，河水齐胸、上游还在降雨。对岸暂无大敌，但工兵连只剩少量绳索和门板，数万大军要在追兵到达前通过——",options:[{text:"绳索固定两岸，门板铺成简易浮桥，辎重减重分批过河",correct:true,result:"正确！因陋就简、快速架桥、分批通过，是长征工兵的看家本领。"},{text:"全员徒涉，会水的扶不会水的",correct:false,result:"错误！降雨会让河水暴涨，徒涉必然冲走大量人员物资。"},{text:"伐木重造一座新桥",correct:false,result:"错误！追兵以小时计，造新桥时间根本来不及。"},{text:"放弃此渡口，全军另找桥梁",correct:false,result:"错误！临时改线会打乱整个行军计划，其他渡口可能也已设防。"}],history:"长征中的红军工兵堪称'水上线人'：于都河搭浮桥、乌江扎竹筏、白龙江修复悬崖栈道、草地架木桥。白龙江上的古栈道被炸断后，工兵在崖壁上重新铺板，部队贴着崖壁鱼贯通过。设备简陋，靠的是绳索、门板和严密的工程纪律。"},
+{icon:"🛕",title:"藏寨借宿",desc:"部队夜宿藏寨，受敌军谣言影响，藏民都躲上了山。寨中有经堂、青稞田和牛羊，战士们又冷又饿。你的命令是——",options:[{text:"不住经堂、不拿粮物，所需补给照价留银元，请通司留信说明",correct:true,result:"正确！尊重宗教信仰、买卖公平，谣言自会不攻自破。"},{text:"先住进经堂避风，事后赔偿",correct:false,result:"错误！经堂是藏民最神圣的地方，住进去就是触犯禁忌。"},{text:"军情紧急，先杀牛羊吃了以后再补",correct:false,result:"错误！未经同意宰杀牲畜，敌人的谣言就会变成'事实'。"},{text:"寨子一律不进，全连露宿寨外雪地",correct:false,result:"错误！冻馁会造成大量非战斗减员，可住民房，但必须严守纪律。"}],history:"红军经过藏区时严格执行民族宗教政策：经堂不住、神像不碰、粮食照价购买。藏民回家后发现屋内整齐、银元和借据压在佛像前，国民党'红军共产共妻'的谣言不攻自破。许多藏族群众从此为红军带路、送粮，有的直接参加了红军。"},
+{icon:"🎖️",title:"敌军的军装",desc:"奇袭途中缴获一批敌军军装和一辆卡车。连长提议穿上敌装混进前方隘口，指导员担心违反纪律、误伤群众——",options:[{text:"严格限定用途：只用于奇袭夺点，不抢劫不扰民，得手后立即换装",correct:true,result:"正确！兵不厌诈，化装奇袭是我军常用战术，关键是划清纪律边界。"},{text:"拒绝使用，军装奇袭胜之不武",correct:false,result:"错误！战争中以最小代价夺取决胜点是对战士生命负责。"},{text:"全程穿着敌装行军征粮",correct:false,result:"错误！长期冒充敌军必然侵害群众、败坏红军名声。"},{text:"把军装修路障烧掉",correct:false,result:"错误！白白浪费一次出其不意的战机。"}],history:"1935年5月，红军干部团化装成国民党中央军，大摇大摆到达皎平渡，守敌以为是'自己人'，拱手交出渡口和仅有的几条船——等反应过来，渡口已易手。红军对化装行动立有铁规：只用于战术奇袭，绝不借敌装抢劫、派款、拉夫。"},
+{icon:"🐴",title:"战马",desc:"草地断粮三天，伤病员开始饿昏。连里仅剩连长的一匹战马，它救过连长的命，也一直驮着最重的药箱。战士们都望着连长——",options:[{text:"杀马分肉救急，马骨熬汤，肉优先分给伤病员",correct:true,result:"正确！人的生命高于一切，彭德怀也作过同样的抉择。"},{text:"马是功臣，宁可饿死也不杀",correct:false,result:"错误！情感可贵，但战士的生命比战马更重要。"},{text:"把马放归草地听天由命",correct:false,result:"错误！放马解决不了粮食问题，等于放弃伤病员。"},{text:"杀马但不给连长吃",correct:false,result:"错误！干部战士同甘共苦，特殊化反而伤害队伍感情。"}],history:"过草地时，彭德怀下令杀掉包括自己坐骑在内的全部战马，把肉分给战士。警卫员抱着马哭，彭德怀说：'人比马重要。'贺龙的马也多次杀给伤员充饥。在红军里，战马、文件、个人物品都可以为生存让路，唯一不让的是对战友的责任。"},
+{icon:"🩸",title:"最后的请求",desc:"腹部重伤的战友已知自己走不出草地，他拉住你的手，请求补他一枪：'别把我留给敌人，也别再拖累同志们。'周围战士都在哭。你是指导员——",options:[{text:"拒绝，把他扶上担架，全连轮流抬着走",correct:true,result:"正确！无论什么理由，红军都不能把枪口对准战友，也没有丢下伤员的传统。"},{text:"含泪答应，给他一个痛快",correct:false,result:"错误！枪杀战友是这支军队绝对不能逾越的底线。"},{text:"留下干粮和枪，让他自己决定",correct:false,result:"错误！这是变相抛弃，战士们会寒心。"},{text:"假装没听见，让担架队自行处理",correct:false,result:"错误！回避矛盾只会让队伍人心涣散。"}],history:"长征中有大量重伤员被战友抬出死亡地带：王稼祥腹部重伤，全程靠担架走完长征；周恩来患肝脓肿，也是战士们抬着过雪山草地。也有重伤员为不拖累部队而自我牺牲的悲壮事例，但'不丢下一个战友'始终是铁律——正是这条铁律，让每个战士都敢冲锋。"},
+{icon:"🌾",title:"埋在地里的粮",desc:"藏民听信谣言躲进深山，地里青稞熟了无人收，部队急需粮食却找不到主人。有人建议先收割，反正主人不在。你的处置是——",options:[{text:"按估算市价把银元包好埋在收割处，插上木牌说明",correct:true,result:"正确！付款购买、留字为凭，纪律必须当场兑现。新中国成立后政府凭这些借条一一作了兑现。"},{text:"先割了充饥，将来革命胜利再还",correct:false,result:"错误！'将来再还'对当下的群众就是空话。"},{text:"找不到主人，宁肯饿死也不能割",correct:false,result:"错误！绝对化会造成减员，照价付钱就不违反纪律。"},{text:"只割一半，给主人留一半",correct:false,result:"错误！没有凭据的'留一半'说不清，最稳妥的是照价付银。"}],history:"长征过藏区，红军留下大量'红军条'：借粮条、买羊条、损坏赔偿条。部队撤离后，藏族群众回家发现银元和字条压在田头。新中国成立后，许多群众拿着当年的借条找到人民政府，政府一一核实兑现——一张纸条，就是人民军队守信于民的证据。"},
+{icon:"🥶",title:"不许睡觉",desc:"雪山垭口风雪太大，部队被迫原地停留。坐下休息的战士很快不想站起来，有人已经意识模糊。你是现场最高指挥员——",options:[{text:"强制全员活动：点名报数、互相搓雪搓脸、搀扶行走，谁睡就架着谁走",correct:true,result:"正确！雪山上'休息'往往就是永别，强制活动是救命的命令。"},{text:"让走不动的靠墙休息，安排人照看",correct:false,result:"错误！照看者也会一起冻僵，雪山上没有'小睡一会儿'。"},{text:"用烈酒灌服昏迷战士取暖",correct:false,result:"错误！酒精加速体表散热，高原饮酒反而加快失温。"},{text:"等风雪小了再统一出发",correct:false,result:"错误！停留越久冻死越多，必须硬闯。"}],history:"红军过雪山有一条铁律：不许坐下、不许睡觉。宣传员在路边喊：'同志们，不能坐啊，坐下就起不来啦！'战士们互相搀扶、嚼辣椒、数数字保持清醒。许多被架着走过垭口的战士事后回忆：'是战友的胳膊，把我从鬼门关拽了回来。'"}
+];
+
+/* ============ 真实长征历史照片（场景背景） ============ */
+const REAL_IMGS=['ruijin','wuyang','tucheng','taiping','loushan','maotai','erlang','jiaoping','shidong','luding','jiajin','maogong','dagu','caodi','bailong','lazikou','hadapu','wuqi','minjiang','ganzi','caimen','shanpao','gonghe','hong1','hong4','nuganbu','yizu','slogan','route'];
+
+/* ============ 难度配置 ============ */
+const difficultyConfig={
+ easy:{time:20,name:"简单",point:10,weight:1.0,questions:EASY_QUESTIONS},
+ hard:{time:15,name:"困难",point:15,weight:1.5,questions:HARD_QUESTIONS},
+ hell:{time:15, name:"地狱",point:20,weight:2.0,questions:HELL_QUESTIONS}
+};
+const PER_GAME=25;
+
+/* ============ 历史时间锚点（年月日数字），题目按真实历史事件时间排列 ============ */
+const TIME_FIX={
+ /* 简单 */
+ '于都河畔 · 1934年10月':19341017,'突破封锁线 · 1934年11月':19341101,'半条被子 · 1934年11月':19341110,
+ '敌机临空':19341125,'湘江血战 · 1934年11月':19341127,'老山界 · 1934年12月':19341205,'火把的学问':19341206,
+ '强渡乌江 · 1935年1月':19350102,'遵义转折 · 1935年1月':19350115,'激战娄山关 · 1935年2月':19350225,
+ '红薯地里的银元':19350301,'彝海结盟 · 1935年5月':19350522,'昼夜奔袭240里':19350528,'飞夺泸定桥 · 1935年5月':19350529,
+ '翻越夹金山 · 1935年6月':19350612,'雪山上的毛毯':19350613,'丰碑':19350614,'草地生死 · 1935年8月':19350821,
+ '草地迷途':19350822,'一袋干粮':19350823,'金色的鱼钩':19350824,'担架上的抉择':19350825,
+ '突破腊子口 · 1935年9月':19350916,'吴起镇切尾巴 · 1935年10月':19351021,'会宁大会师':19361010,
+ /* 困难 */
+ '通道转兵 · 1934年12月':19341212,'黎平定策 · 1934年12月':19341218,'土城失利之后 · 1935年1月':19350128,
+ '鸡鸣三省交权 · 1935年2月':19350205,'再占遵义 · 1935年2月':19350228,'苟坝深夜的马灯 · 1935年3月':19350310,
+ '北渡嘉陵江 · 1935年3月':19350328,'四渡赤水 · 兵临贵阳':19350331,'巧渡金沙江 · 1935年5月':19350503,
+ '会理风波 · 1935年5月':19350512,'安顺场的困境 · 1935年5月':19350525,'翻越大雪山 · 1935年6月':19350612,
+ '两河口定方向 · 1935年6月':19350626,'芦花沙窝求团结 · 1935年7-8月':19350718,'松潘还是草地 · 1935年8月':19350820,
+ '包座战役 · 1935年8月':19350829,'巴西惊魂夜 · 1935年9月':19350909,'俄界缩编 · 1935年9月':19350912,
+ '哈达铺的报纸 · 1935年9月':19350920,'榜罗镇定归宿 · 1935年9月':19350927,'直罗镇奠基礼 · 1935年11月':19351120,
+ '东征出征 · 1936年2月':19360220,'西征接应 · 1936年夏秋':19360518,'会宁会师 · 1936年10月':19361009,
+ '山城堡战役 · 1936年11月':19361121,
+ /* 地狱（情景题，按情节对应的历史阶段锚定） */
+ '追兵应对':19341110,'路遇民团':19341120,'夜火判断':19341210,'俘虏抉择':19350110,'叛徒处置':19350125,
+ '向导抉择':19350315,'情报真伪':19350320,'敌军的军装':19350325,'夜半电波':19350401,'渡口取舍':19350505,
+ '彝区对峙':19350522,'断桥':19350529,'吗啡分配':19350605,'雪崩危机':19350615,'严寒取暖':19350616,
+ '不许睡觉':19350617,'路线分歧':19350626,'征粮困境':19350710,'藏寨借宿':19350715,'沼泽救援':19350821,
+ '水源甄别':19350822,'最后的干粮':19350823,'最后的请求':19350824,'埋在地里的粮':19350825,'战马':19350910
+};
+function qTime(q){
+ if(TIME_FIX[q.title]!=null)return TIME_FIX[q.title];
+ const m=q.title.match(/(\d{4})年(\d{1,2})月/);
+ if(m)return (+m[1])*10000+(+m[2])*100+15;
+ return 99999999;
+}
+
+/* ============ 结局文案 ============ */
+const ENDINGS={
+ victory:{title:"🎉 长征胜利！",meaningTitle:"长征胜利的伟大意义",paras:["恭喜你！从1934年10月到1936年10月，你跟随红军跨过了这道人类历史上罕见的生死门槛。长征的胜利，粉碎了国民党反动派消灭红军的企图，保存了党和红军的基干力量，使中国革命转危为安。","长征向全世界宣告：中国共产党及其领导的人民军队，是用马克思主义武装起来的、不可战胜的力量。长征途中播下的革命种子，在日后生根发芽——正是这仅存的几万人，十四年后建立了新中国。","毛泽东说：'长征是宣言书，长征是宣传队，长征是播种机。'习近平总书记指出：'伟大长征精神，就是把全国人民和中华民族的根本利益看得高于一切，坚定革命的理想和信念。'每一代人有每一代人的长征路——今天，轮到我们走好自己的长征路。"]},
+ defeat:{title:"💀 倒在了长征路上",meaningTitle:"铭记 · 反思 · 前行",paras:["你没能走完全程。这并不可耻——真实的长征中，从于都河畔出发的8.6万中央红军，到达陕北时只剩7000余人；平均每前进300米，就有一名红军战士倒下。你今天的'失败'，正是他们当年的日常。","但长征的伟大，恰恰在于即使倒下99次，仍有人第100次站起来继续前进。湘江血战后只剩3万人，红军没有散；雪山草地吞噬了无数生命，队伍没有垮。正是这种向死而生的信念，支撑着革命走到了陕北。","'红军不怕远征难，万水千山只等闲。'今天的我们坐在明亮的教室里回望这段历史，最好的纪念，就是把长征精神化作自己前行路上的勇气。整理行装，再走一次——这一次，你一定能走到吴起镇！"]}
+};
+const MARCH_STATS=[{num:"14个",label:"跨越省份"},{num:"18座",label:"翻越大山"},{num:"24条",label:"跨过大河"},{num:"2.5万里",label:"红一行程"},{num:"600余次",label:"战役战斗"},{num:"2年",label:"1934—1936"}];
+
+/* ============ 游戏状态 ============ */
+let gameState={difficulty:null,currentLevel:0,correctCount:0,wrongCount:0,score:0,timer:null,timeLeft:0,isAnswered:false,questionPool:[],photos:[]};
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startGame(difficulty){
+ initAudio();
+ gameState.difficulty=difficulty;
+ gameState.currentLevel=0;
+ gameState.correctCount=0;
+ gameState.wrongCount=0;
+ gameState.score=0;
+ gameState.isAnswered=false;
+ const all=difficultyConfig[difficulty].questions;
+ gameState.questionPool=[...all].sort((a,b)=>qTime(a)-qTime(b));
+ gameState.photos=shuffle(REAL_IMGS);
+ document.getElementById('difficultyScreen').classList.add('hidden');
+ document.getElementById('gameScreen').style.display='flex';
+ playBGM(difficulty);startAmbient();
+ loadLevel();
+}
+
+function loadLevel(){
+ const level=gameState.questionPool[gameState.currentLevel];
+ const config=difficultyConfig[gameState.difficulty];
+ document.getElementById('levelIndicator').textContent=`第 ${gameState.currentLevel+1} 题 / 共 ${PER_GAME} 题 · ${config.name}模式`;
+ document.getElementById('scoreIndicator').textContent=`得分：${gameState.score} · 答对 ${gameState.correctCount}`;
+ document.getElementById('sceneIcon').textContent=level.icon;
+ document.getElementById('sceneTitle').textContent=level.title;
+ document.getElementById('sceneDesc').textContent=level.desc;
+ // 真实长征历史照片背景
+ const photo=gameState.photos[gameState.currentLevel%gameState.photos.length];
+ const bg=document.getElementById('sceneBg');
+ bg.style.background=`url('images/real/${photo}.jpg') center/cover no-repeat, rgba(0,0,0,.55)`;
+ bg.style.backgroundBlendMode='multiply';
+ bg.style.opacity=1;
+ document.getElementById('sceneBgIcon').textContent=level.icon;
+ const container=document.getElementById('optionsContainer');
+ container.innerHTML='';
+ // shuffle选项并记录正确答案新位置
+ const shuffledOpts=shuffle(level.options);
+ level._shuffled=shuffledOpts;
+ shuffledOpts.forEach((option,index)=>{
+  const btn=document.createElement('div');
+  btn.className='option-btn';
+  btn.innerHTML=`<div class="option-letter">${String.fromCharCode(65+index)}</div><div class="option-text">${option.text}</div>`;
+  btn.onclick=()=>pickOption(index);
+  container.appendChild(btn);
+ });
+ gameState.isAnswered=false;
+ startTimer();
+}
+
+function startTimer(){
+ const config=difficultyConfig[gameState.difficulty];
+ gameState.timeLeft=config.time;
+ const timerText=document.getElementById('timerText');
+ const timerProgress=document.getElementById('timerProgress');
+ const timerCircle=document.getElementById('timerCircle');
+ const circumference=201;
+ render();
+ gameState.timer=setInterval(()=>{
+  gameState.timeLeft--;render();
+  if(gameState.timeLeft===5)heartbeatStart();
+  if(gameState.timeLeft>0&&gameState.timeLeft<=3)playTick();
+  if(gameState.timeLeft<=0){clearInterval(gameState.timer);handleAnswer(-1);}
+ },1000);
+ function render(){timerText.textContent=gameState.timeLeft;timerProgress.style.strokeDashoffset=circumference-(gameState.timeLeft/config.time)*circumference;timerCircle.classList.remove('warning','danger');if(gameState.timeLeft<=Math.ceil(config.time*0.25))timerCircle.classList.add('danger');else if(gameState.timeLeft<=Math.ceil(config.time*0.5))timerCircle.classList.add('warning');}
+}
+
+function pickOption(index){if(gameState.isAnswered)return;clearInterval(gameState.timer);heartbeatStop();handleAnswer(index);}
+
+function handleAnswer(selectedIndex){
+ if(gameState.isAnswered)return;gameState.isAnswered=true;
+ heartbeatStop();
+ const level=gameState.questionPool[gameState.currentLevel];
+ const isCorrect=selectedIndex>=0&&level._shuffled[selectedIndex].correct;
+ const overlay=document.getElementById('resultOverlay');
+ const icon=document.getElementById('resultIcon');
+ const title=document.getElementById('resultTitle');
+ const text=document.getElementById('resultText');
+ const historyEl=document.getElementById('historyText');
+ const btn=document.getElementById('resultBtn');
+ historyEl.textContent=level.history;
+ if(isCorrect){
+  // 答对不出声
+  gameState.correctCount++;
+  icon.textContent='✓';icon.style.color='#4ade80';
+  title.textContent='抉择正确！';title.className='result-title success';
+  text.textContent=level._shuffled[selectedIndex].result;
+  btn.textContent=gameState.currentLevel===PER_GAME-1?'见证胜利':'继续前进';
+  gameState.score+=difficultyConfig[gameState.difficulty].point;
+ }else{
+  playOne('wrong');
+  gameState.wrongCount++;
+  icon.textContent='✗';icon.style.color='#ff6b6b';
+  title.textContent=selectedIndex===-1?'时间耗尽！':'抉择失误！';
+  title.className='result-title fail';
+  text.textContent=selectedIndex>=0?level._shuffled[selectedIndex].result:'战场之上，犹豫与错误同样致命。看看真实的历史是如何抉择的——';
+  btn.textContent=gameState.currentLevel===PER_GAME-1?'查看结局':'重整旗鼓';
+ }
+ document.getElementById('scoreIndicator').textContent=`得分：${gameState.score} · 答对 ${gameState.correctCount} · 答错 ${gameState.wrongCount}`;
+ overlay.classList.add('show');
+}
+
+function nextLevel(){
+ document.getElementById('resultOverlay').classList.remove('show');
+ if(gameState.currentLevel===PER_GAME-1)showEndScreen();
+ else{gameState.currentLevel++;loadLevel();}
+}
+
+function showEndScreen(){
+ stopAllMusic();
+ const failed=gameState.wrongCount>8;
+ const end=failed?ENDINGS.defeat:ENDINGS.victory;
+ const screen=document.getElementById('endScreen');
+ screen.className='end-screen show '+(failed?'defeat':'victory');
+ document.getElementById('endTitle').textContent=end.title;
+ const config=difficultyConfig[gameState.difficulty];
+ const finalScore=gameState.score;
+ document.getElementById('endScore').textContent=`${config.name}模式 · 本局得分：${finalScore} 分 · 答对 ${gameState.correctCount} / ${PER_GAME} 题 · 答错 ${gameState.wrongCount} 题${failed?'（超过 8 题，征程失败）':''}`;
+ document.getElementById('endMeaningTitle').textContent=end.meaningTitle;
+ document.getElementById('endMeaning1').textContent=end.paras[0];
+ document.getElementById('endMeaning2').textContent=end.paras[1];
+ document.getElementById('endMeaning3').textContent=end.paras[2];
+ const stats=document.getElementById('marchStats');
+ stats.innerHTML='';
+ MARCH_STATS.forEach(s=>{const card=document.createElement('div');card.className='stat-card';card.innerHTML=`<div class="num">${s.num}</div><div class="label">${s.label}</div>`;stats.appendChild(card);});
+ if(!failed)playBGM('victory');
+ recordScore(gameState.difficulty,finalScore);
+}
+
+function restartGame(){
+ stopAllMusic();
+ document.getElementById('endScreen').classList.remove('show');
+ document.getElementById('gameScreen').style.display='none';
+ document.getElementById('difficultyScreen').classList.remove('hidden');
+ clearInterval(gameState.timer);
+ updateDifficultyBest();
+ playBGM('intro');
+}
+
+/* 答题中途退出：本次成绩不作数，返回模式选择 */
+function quitGame(){
+ if(!confirm('确定退出本次答题？本次成绩将不作数。'))return;
+ clearInterval(gameState.timer);
+ heartbeatStop();
+ stopAllMusic();
+ document.getElementById('resultOverlay').classList.remove('show');
+ document.getElementById('gameScreen').style.display='none';
+ document.getElementById('difficultyScreen').classList.remove('hidden');
+ updateDifficultyBest();
+ playBGM('intro');
+}
+
+window.addEventListener('beforeunload',()=>{clearInterval(gameState.timer);stopAllMusic();});
+loadUser();
+/* 页面一打开（欢迎简介界面）就尝试播放开场音乐；若被浏览器自动播放策略拦截，则由首次点击触发 */
+(function(){const p=snd.intro.play();if(p)p.catch(()=>{});})();
+</script>
+</body>
+</html>
