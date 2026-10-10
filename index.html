@@ -179,6 +179,7 @@ body{font-family:'Microsoft YaHei','SimHei',sans-serif;background:#0a0a0a;color:
 </style>
 </head>
 <body>
+<div id="audioDbg" style="position:fixed;top:2px;right:2px;z-index:99999;background:rgba(0,0,0,.85);color:#0f0;font:11px monospace;padding:3px 6px;border-radius:4px;pointer-events:none;max-width:280px;word-break:break-all;display:none;"></div>
 <div class="game-container">
     <div class="header">
         <h1>长 征 之 路</h1>
@@ -334,7 +335,7 @@ function img(p){return IMG_API+encodeURIComponent(p);}
 
 /* ============ 音频系统（真实音频文件，首尾静音已裁，循环播放） ============ */
 let muted=false;
-function mkAudio(src,loop,vol){const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';return a;}
+function mkAudio(src,loop,vol){const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';a._vol=vol;return a;}
 const snd={
  intro:mkAudio('audio/intro.mp3',true,0.45),
  easy:mkAudio('audio/bgm_easy.mp3',true,0.5),
@@ -346,24 +347,25 @@ const snd={
  guns:mkAudio('audio/guns.mp3',false,0.16)
 };
 let bgmTimer=null;
+function dbgAudio(msg){const d=document.getElementById('audioDbg');if(d){d.style.display='block';d.textContent=msg;}}
 function playBGM(k){
  ['intro','easy','hard','hell','victory'].forEach(x=>{if(x!==k)snd[x].pause();});
  if(bgmTimer){clearTimeout(bgmTimer);bgmTimer=null;}
  if(muted)return;
  const a=snd[k];
- /* 不依赖 paused 状态判断：某些浏览器在 play() 被自动播放策略拦截后会留下 paused=false 的伪状态，
-    导致 if(!a.paused)return 跳过播放。直接 currentTime=0+play() 确保每次都能播放 */
- a.currentTime=0;
- const p=a.play();if(p)p.catch(()=>{});
+ a.volume=a._vol;
+ try{a.currentTime=0;}catch(e){}
+ const p=a.play();
+ if(p)p.then(()=>{dbgAudio(`BGM ${k} OK rs=${a.readyState} ct=${a.currentTime.toFixed(1)}`);}).catch(e=>{dbgAudio(`BGM ${k} FAIL:${e.name} rs=${a.readyState}`);});
 }
-function playOne(k){if(muted)return;const a=snd[k];a.currentTime=0;const p=a.play();if(p)p.catch(()=>{});}
+function playOne(k){if(muted)return;const a=snd[k];a.volume=a._vol;try{a.currentTime=0;}catch(e){}const p=a.play();if(p)p.catch(()=>{});}
 let gunTimer=null,heartPlaying=false;
 function clearAmbient(){if(gunTimer){clearTimeout(gunTimer);gunTimer=null;}snd.guns.pause();snd.heart.pause();heartPlaying=false;}
 function scheduleGun(){
  gunTimer=setTimeout(()=>{
   const inGame=document.getElementById('gameScreen').style.display!=='none'&&!document.getElementById('endScreen').classList.contains('show');
   if(!muted&&inGame){
-   const g=snd.guns;
+   const g=snd.guns;g.volume=g._vol;
    g.currentTime=Math.random()*70;
    g.play().catch(()=>{});
    setTimeout(()=>g.pause(),5000+Math.random()*6000);
@@ -372,7 +374,7 @@ function scheduleGun(){
  },20000+Math.random()*25000);
 }
 function startAmbient(){clearAmbient();if(muted)return;scheduleGun();}
-function heartbeatStart(){if(muted||heartPlaying)return;heartPlaying=true;const h=snd.heart;h.currentTime=0;h.play().catch(()=>{});}
+function heartbeatStart(){if(muted||heartPlaying)return;heartPlaying=true;const h=snd.heart;h.volume=h._vol;h.currentTime=0;h.play().catch(()=>{});}
 function heartbeatStop(){heartPlaying=false;snd.heart.pause();}
 /* 倒计时最后3秒的滴滴声（WebAudio合成短音） */
 let audioCtx=null;
@@ -389,16 +391,21 @@ function toggleMute(){
   else{playBGM('intro');}
  }
 }
-/* 首次点击后解锁音频：仅播放开场音乐（intro）。
-   不对其他 BGM 做预热（play→pause），因为大文件的 play() promise resolve 延迟会导致竞态：
-   用户点难度按钮时 playBGM 开始播放 BGM，随后预热的 promise resolve 并 pause() 会把正在播放的 BGM 停掉。
-   各 BGM 的 play() 均在 onclick 手势内调用，不会被自动播放策略拦截；音频元素设了 preload='auto' 已提前加载。 */
+/* 首次点击后解锁音频：对所有音频做 volume=0→play（不 pause），让浏览器在手势上下文内开始加载大文件。
+   playBGM 调用时恢复 a.volume=a._vol 再 currentTime=0+play()。
+   不在 .then 里 pause，避免 promise resolve 延迟导致竞态停掉正在播放的 BGM。 */
 let _audioUnlocked=false;
 function unlockAudio(){
  if(_audioUnlocked)return;_audioUnlocked=true;
  initAudio();
+ ['easy','hard','hell','victory','wrong','heart','guns'].forEach(x=>{
+  const a=snd[x];
+  a.volume=0;
+  try{const p=a.play();if(p)p.catch(()=>{});}catch(e){}
+ });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
+  snd.intro.volume=snd.intro._vol;
   const p=snd.intro.play();if(p)p.catch(()=>{});
  }
  document.removeEventListener('pointerdown',unlockAudio);
