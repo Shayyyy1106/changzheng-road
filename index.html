@@ -224,6 +224,7 @@ body{font-family:'Microsoft YaHei','SimHei',sans-serif;background:#0a0a0a;color:
                 <div class="field"><label>姓名</label><input id="inputRealName" placeholder="请输入姓名"></div>
             </div>
             <button class="start-btn" onclick="doLogin()">接受使命，进入长征</button>
+            <div style="text-align:center;color:#ffd700;font-size:12px;margin-top:10px;letter-spacing:2px;opacity:.85">🔊 点击页面任意位置即可开启背景音乐</div>
         </div>
     </div>
 
@@ -389,10 +390,13 @@ function toggleMute(){
   else{playBGM('intro');}
  }
 }
-/* 首次点击/按键后解锁并播放开头音乐 */
+/* 首次点击/按键后解锁并播放开头音乐（强制重新播放，绕过 paused 状态判断，确保浏览器自动播放策略拦截后仍可解锁出声） */
 document.addEventListener('pointerdown',function firstGesture(){
  initAudio();
- if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){playBGM('intro');}
+ if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
+  snd.intro.pause();snd.intro.currentTime=0;
+  const p=snd.intro.play();if(p)p.catch(()=>{});
+ }
  document.removeEventListener('pointerdown',firstGesture);
 });
 
