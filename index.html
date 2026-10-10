@@ -336,12 +336,9 @@ function img(p){return IMG_API+encodeURIComponent(p);}
 /* ============ 音频系统（真实音频文件，首尾静音已裁，循环播放） ============ */
 let muted=false;
 function mkAudio(src,loop,vol){
- const a=new Audio();a.loop=loop;a.volume=vol;a._vol=vol;
- a._ready=(function retry(n){
-  return fetch(src).then(r=>{if(!r.ok)throw new Error('HTTP'+r.status);return r.blob();})
-   .then(b=>{a.src=URL.createObjectURL(b);})
-   .catch(e=>{if(n>0)return new Promise(r=>setTimeout(r,500)).then(()=>retry(n-1));a.src=src;});
- })(3);
+ const a=new Audio(src);a.loop=loop;a.volume=vol;a.preload='auto';a._vol=vol;a._src=src;
+ a.addEventListener('stalled',()=>{dbgAudio((src.split('/').pop())+' stalled, reload');a.load();});
+ a.addEventListener('error',()=>{setTimeout(()=>{a.src=a._src+'?r='+Date.now();a.load();},500);});
  return a;
 }
 const snd={
@@ -364,10 +361,7 @@ function playBGM(k){
  a.volume=a._vol;
  try{a.currentTime=0;}catch(e){}
  const p=a.play();
- if(p)p.then(()=>{dbgAudio(`BGM ${k} OK rs=${a.readyState} ct=${a.currentTime.toFixed(1)}`);}).catch(e=>{
-  dbgAudio(`BGM ${k} wait blob...`);
-  a._ready.then(()=>{a.volume=a._vol;try{a.currentTime=0;}catch(_){}a.play().then(()=>dbgAudio(`BGM ${k} retry OK`)).catch(e=>dbgAudio(`BGM ${k} retry FAIL:${e.name}`));});
- });
+ if(p)p.then(()=>{dbgAudio(`BGM ${k} OK rs=${a.readyState} ct=${a.currentTime.toFixed(1)}`);}).catch(e=>{dbgAudio(`BGM ${k} FAIL:${e.name}`);});
 }
 function playOne(k){if(muted)return;const a=snd[k];a.volume=a._vol;try{a.currentTime=0;}catch(e){}const p=a.play();if(p)p.catch(()=>{});}
 let gunTimer=null,heartPlaying=false;
@@ -402,18 +396,12 @@ function toggleMute(){
   else{playBGM('intro');}
  }
 }
-/* 首次点击后解锁音频：对所有音频做 volume=0→play（不 pause），让浏览器在手势上下文内开始加载大文件。
-   playBGM 调用时恢复 a.volume=a._vol 再 currentTime=0+play()。
-   不在 .then 里 pause，避免 promise resolve 延迟导致竞态停掉正在播放的 BGM。 */
+/* 首次点击后解锁音频：播放开场音乐。各 BGM 在 onclick 手势内由 playBGM 播放。
+   stalled/error 事件自动重载，应对 HTTP/2 流式中断。 */
 let _audioUnlocked=false;
 function unlockAudio(){
  if(_audioUnlocked)return;_audioUnlocked=true;
  initAudio();
- ['easy','hard','hell','victory','wrong','heart','guns'].forEach(x=>{
-  const a=snd[x];
-  a.volume=0;
-  try{const p=a.play();if(p)p.catch(()=>{});}catch(e){}
- });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
   snd.intro.volume=snd.intro._vol;
