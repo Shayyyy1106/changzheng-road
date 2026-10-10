@@ -389,20 +389,14 @@ function toggleMute(){
   else{playBGM('intro');}
  }
 }
-/* 首次点击后解锁全部音频并播放开场音乐：在手势上下文内对每个音频元素执行一次 volume=0→play→pause，
-   确保各 audio 元素被浏览器标记为"用户激活"，后续播放（含 setTimeout 中的延迟播放）不再被自动播放策略拦截。
-   play 后立即 pause 恢复 paused=true，不影响 playBGM 的逻辑。同时绑 click 兼容 iOS（pointerdown 在部分移动端不可靠） */
+/* 首次点击后解锁音频：仅播放开场音乐（intro）。
+   不对其他 BGM 做预热（play→pause），因为大文件的 play() promise resolve 延迟会导致竞态：
+   用户点难度按钮时 playBGM 开始播放 BGM，随后预热的 promise resolve 并 pause() 会把正在播放的 BGM 停掉。
+   各 BGM 的 play() 均在 onclick 手势内调用，不会被自动播放策略拦截；音频元素设了 preload='auto' 已提前加载。 */
 let _audioUnlocked=false;
 function unlockAudio(){
  if(_audioUnlocked)return;_audioUnlocked=true;
  initAudio();
- /* 解锁所有音频元素（intro 单独处理，下面正常播放） */
- ['easy','hard','hell','victory','wrong','heart','guns'].forEach(x=>{
-  const a=snd[x]; const v=a.volume;
-  a.volume=0;
-  try{ const p=a.play(); if(p) p.then(()=>{a.pause();a.volume=v;}).catch(()=>{a.pause();a.volume=v;}); }
-  catch(e){ a.pause(); a.volume=v; }
- });
  if(document.getElementById('gameScreen').style.display==='none'&&!document.getElementById('endScreen').classList.contains('show')){
   snd.intro.pause();snd.intro.currentTime=0;
   const p=snd.intro.play();if(p)p.catch(()=>{});
